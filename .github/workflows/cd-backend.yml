@@ -1,0 +1,70 @@
+name: CD DevSecBackend
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:${{ github.sha }} .
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:${{ github.sha }}
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:latest
+
+      - name: Setup SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          known_hosts: unnecessary
+
+      - name: Add EC2 to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 22 -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy backend on EC2
+        run: |
+          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
+            set -euo pipefail
+
+            echo "Pulling image from Docker Hub..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:${{ github.sha }}
+
+            echo "Stopping old container if exists..."
+            docker stop backend || echo "No container running"
+            docker rm backend || echo "No container to remove"
+
+            echo "Running new container..."
+            docker run -d --name backend --network bdd_nginx_app-network -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/kgpc \
+              -e SPRING_DATASOURCE_USERNAME=postgres \
+              -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:${{ github.sha }}
+
+            echo "Verifying container..."
+            docker ps
+            echo "Last logs:"
+            docker logs backend | tail -20
+
+            echo "Deployment completed successfully"
+          EOF
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}

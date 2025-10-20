@@ -1,0 +1,52 @@
+name: CI DevSecBackend
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-backend:
+    name: Build and Test Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and test backend with Maven
+        run: mvn clean verify --file ./pom.xml
+
+      - name: Run Checkstyle (format test)
+        run: mvn checkstyle:check --file ./pom.xml
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@master
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          upload: true
+          fail-if-incomplete: false
+      
+      - name: Upload target report
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-report
+          path: target/
