@@ -36,14 +36,6 @@ jobs:
       - name: Run Checkstyle (format test)
         run: mvn checkstyle:check --file ./pom.xml
 
-      - name: Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@master
-      - name: Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@master
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          upload: true
-          fail-if-incomplete: false
       
       - name: Upload target report
         uses: actions/upload-artifact@v4
