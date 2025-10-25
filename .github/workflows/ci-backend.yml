@@ -1,10 +1,5 @@
 name: CI DevSecBackend
 
-permissions:
-  contents: write
-  pull-requests: write
-  security-events: write
-
 on:
   pull_request:
     branches:
@@ -19,33 +14,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          persist-credentials: true
+          persist-credentials: false
+
+      - name: Check for Dependabot security alerts
+        run: |
+          ALERTS=$(gh api repos/${{ github.repository }}/dependabot/alerts --jq 'length')
+          if [ "$ALERTS" -gt 0 ]; then
+            echo "Dependabot detected $ALERTS security issues. Failing CI."
+            exit 1
+          else
+            echo "No Dependabot security issues found."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'maven'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Build and test backend with Maven
         run: mvn clean verify --file ./pom.xml
 
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/setup@master
-      
-      - name: Run SCA with Snyk (Maven)
-        run: snyk test --package-manager=maven --file=pom.xml --severity-threshold=medium
+      - name: Run SCA with Snyk
+        uses: snyk/actions/maven@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-      - name: Run SCA with Snyk (npm)
-        run: snyk test --file=package.json --severity-threshold=medium
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=medium
 
       - name: Run Checkstyle (format test)
         run: mvn checkstyle:check --file ./pom.xml
+
       
       - name: Upload target report
         uses: actions/upload-artifact@v4
