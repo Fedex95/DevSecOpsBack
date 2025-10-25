@@ -28,22 +28,39 @@ jobs:
           java-version: '17'
           cache: 'maven'
 
-      - name: Build and test backend with Maven
-        run: mvn clean verify --file ./pom.xml
+      - name: Setup Maven
+        run: |
+          chmod +x mvnw
+          ./mvnw --version
 
-      - name: Run SCA with Snyk
+      - name: Build and test backend with Maven
+        run: ./mvnw clean verify --file ./pom.xml
+
+      - name: Run SCA with Snyk (Maven)
         uses: snyk/actions/maven@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+        with:
+          command: test
+          args: >-
+            --severity-threshold=medium
+            --package-manager=maven
+            --file=pom.xml
+
+      - name: Run SCA with Snyk (npm)
+        uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >-
             --severity-threshold=medium
-            --auto-fix-pr=true
-            --file=pom.xml
+            --file=package.json
 
       - name: Run Checkstyle (format test)
-        run: mvn checkstyle:check --file ./pom.xml
+        run: ./mvnw checkstyle:check --file ./pom.xml
       
       - name: Upload target report
         uses: actions/upload-artifact@v4
