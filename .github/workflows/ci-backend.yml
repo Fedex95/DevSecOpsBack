@@ -37,8 +37,12 @@ jobs:
         uses: snyk/actions/maven@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         with:
-          args: --severity-threshold=medium
+          args: >-
+            --all-projects
+            --severity-threshold=medium
+            --auto-fix-pr=true
 
       - name: Run Checkstyle (format test)
         run: mvn checkstyle:check --file ./pom.xml
