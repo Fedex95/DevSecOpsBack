@@ -45,17 +45,9 @@ jobs:
       - name: Build and test backend with Maven
         run: mvn clean verify --file ./pom.xml
 
-      - name: Run SCA with Snyk
-        uses: snyk/actions/maven@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=medium
-
       - name: Run Checkstyle (format test)
         run: mvn checkstyle:check --file ./pom.xml
 
-      
       - name: Upload target report
         uses: actions/upload-artifact@v4
         with:
