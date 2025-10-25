@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  security-events: read  
+
 jobs:
   full-branch-scan:
     name: Full SonarCloud Analysis Main
