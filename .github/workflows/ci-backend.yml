@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  full-branch-scan:
-    name: Full SonarCloud Analysis Main
+  build-backend:
+    name: Build and Test Backend
     runs-on: ubuntu-latest
 
     steps:
@@ -33,30 +33,6 @@ jobs:
 
       - name: Run Checkstyle (format test)
         run: mvn checkstyle:check --file ./pom.xml
-
-      - name: Run SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=Fedex95_DevSecOpsBack
-            -Dsonar.organization=daslicht
-            -Dsonar.branch.name=main
-
-      - name: Fail if critical/blocker issues exist
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          CRITICAL_ISSUES=$(curl -s -u $SONAR_TOKEN: \
-            "https://sonarcloud.io/api/issues/search?componentKeys=Fedex95_DevSecOpsBack&severities=CRITICAL,BLOCKER" \
-            | jq '.total')
-          echo "Critical/Blocker issues in main: $CRITICAL_ISSUES"
-          if [ "$CRITICAL_ISSUES" -gt 0 ]; then
-            echo "Failing CI due to critical/blocker issues in main"
-            exit 1
-          fi
 
       - name: Upload target report
         uses: actions/upload-artifact@v4

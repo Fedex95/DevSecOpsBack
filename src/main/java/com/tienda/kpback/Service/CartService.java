@@ -3,7 +3,7 @@ package com.tienda.kpback.Service;
 import com.tienda.kpback.Entity.*;
 import com.tienda.kpback.Repository.CartItemRepository;
 import com.tienda.kpback.Repository.CartRepository;
-import com.tienda.kpback.Repository.HistorialRepository;
+//import com.tienda.kpback.Repository.HistorialRepository;
 import com.tienda.kpback.Repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +23,14 @@ public class CartService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private HistorialService historialService;
+    //@Autowired
+    //private HistorialService historialService;
 
-    @Autowired
-    private HistorialRepository historialRepository;
+    //@Autowired
+    //private HistorialRepository historialRepository;
 
-    @Autowired
-    private NotificacionesService  notificacionesService;
+    //@Autowired
+    //private NotificacionesService  notificacionesService;
 
     public Cart createCarrito(Long usuarioId){
         UsuarioEnt usuario = usuarioRepository.findById(usuarioId)
@@ -102,17 +102,18 @@ public class CartService {
         boolean pagado = realizarPago(total);
 
         if(pagado){
-            Historial historial = historialService.addCompra(cart);
+            //Historial historial = historialService.addCompra(cart);
 
             cart.getItems().clear();
 
             cartRepository.save(cart);
-
+/* 
             String mta = "Compra realizada por" + cart.getUsuario().getNombre() +
                     " , ID del pedido: " + historial.getId();
             notificacionesService.notificarAdmin(cart.getUsuario(), mta);
 
             System.out.println("Pago exitoso //");
+            */
         }else {
             throw new RuntimeException("Error al realizar Pago");
         }
