@@ -2,7 +2,6 @@ package com.tienda.kpback.Controller;
 
 import com.tienda.kpback.Entity.Historial;
 import com.tienda.kpback.Service.HistorialService;
-import com.tienda.kpback.Service.NotificacionesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

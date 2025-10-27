@@ -3,7 +3,6 @@ package com.tienda.kpback.Service;
 import com.tienda.kpback.Entity.*;
 import com.tienda.kpback.Repository.CartItemRepository;
 import com.tienda.kpback.Repository.CartRepository;
-import com.tienda.kpback.Repository.HistorialRepository;
 import com.tienda.kpback.Repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +24,6 @@ public class CartService {
 
     @Autowired
     private HistorialService historialService;
-
-    @Autowired
-    private HistorialRepository historialRepository;
 
     @Autowired
     private NotificacionesService  notificacionesService;

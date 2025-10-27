@@ -36,7 +36,7 @@ class CartControllerTest {
         when(cartService.createCarrito(anyLong())).thenReturn(mockCart);
 
         ResponseEntity<Cart> response = cartController.getCartByUsuarioId(1L);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockCart, response.getBody());
     }
 
@@ -51,7 +51,7 @@ class CartControllerTest {
         request.put("cantidad", 3);
 
         ResponseEntity<Cart> response = cartController.addItemToCart(request);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockCart, response.getBody());
     }
 
@@ -61,7 +61,7 @@ class CartControllerTest {
         when(cartService.updateItemCart(anyLong(), anyInt())).thenReturn(mockCart);
 
         ResponseEntity<Cart> response = cartController.updateItemCantidad(1L, 5);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockCart, response.getBody());
     }
 
@@ -70,7 +70,7 @@ class CartControllerTest {
         doNothing().when(cartService).deleteItemCart(anyLong(), anyLong());
 
         ResponseEntity<Void> response = cartController.deleteItemCart(1L, 2L);
-        assertEquals(204, response.getStatusCodeValue());
+        assertEquals(204, response.getStatusCode().value());
     }
 
     @Test
@@ -78,7 +78,7 @@ class CartControllerTest {
         doNothing().when(cartService).Pago(anyLong());
 
         ResponseEntity<Map<String, String>> response = cartController.payCart(1L);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals("success", response.getBody().get("status"));
     }
 }

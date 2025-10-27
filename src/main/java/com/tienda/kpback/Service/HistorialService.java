@@ -21,9 +21,6 @@ public class HistorialService {
     @Autowired
     private UsuarioService usuarioService;
 
-    @Autowired
-    private NotificacionesService notificacionesService;
-
     @Transactional
     public Historial addCompra(Cart cart){
         Historial historial = new Historial();

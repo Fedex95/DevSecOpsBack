@@ -2,7 +2,6 @@ package com.tienda.kpback.Controller;
 
 import com.tienda.kpback.Entity.UsuarioEnt;
 import com.tienda.kpback.Service.UsuarioService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,7 +40,7 @@ class UsuarioControllerTest {
         when(usuarioService.getAllUsuarios()).thenReturn(mockList);
 
         ResponseEntity<List<UsuarioEnt>> response = usuarioController.getAllUsuarios();
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockList, response.getBody());
     }
 
@@ -51,7 +50,7 @@ class UsuarioControllerTest {
         when(usuarioService.getUsuarioById(anyLong())).thenReturn(mockOptional);
 
         ResponseEntity<UsuarioEnt> response = usuarioController.getUsuarioById(1L);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockUsuario, response.getBody());
     }
 
@@ -60,7 +59,7 @@ class UsuarioControllerTest {
         when(usuarioService.getUsuarioById(anyLong())).thenReturn(Optional.empty());
 
         ResponseEntity<UsuarioEnt> response = usuarioController.getUsuarioById(1L);
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
     }
 
     @Test
@@ -68,7 +67,7 @@ class UsuarioControllerTest {
         when(usuarioService.saveUsuario(any(UsuarioEnt.class))).thenReturn(mockUsuario);
 
         ResponseEntity<UsuarioEnt> response = usuarioController.createUsuario(mockUsuario);
-        assertEquals(201, response.getStatusCodeValue());
+        assertEquals(201, response.getStatusCode().value());
         assertEquals(mockUsuario, response.getBody());
     }
 
@@ -77,7 +76,7 @@ class UsuarioControllerTest {
         when(usuarioService.updateUsuario(anyLong(), any(UsuarioEnt.class))).thenReturn(mockUsuario);
 
         ResponseEntity<UsuarioEnt> response = usuarioController.editUsuario(1L, mockUsuario);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockUsuario, response.getBody());
     }
 
@@ -86,7 +85,7 @@ class UsuarioControllerTest {
         when(usuarioService.updateUsuario(anyLong(), any(UsuarioEnt.class))).thenThrow(new RuntimeException("Not found"));
 
         ResponseEntity<UsuarioEnt> response = usuarioController.editUsuario(1L, mockUsuario);
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
     }
 
     @Test
@@ -94,7 +93,7 @@ class UsuarioControllerTest {
         doNothing().when(usuarioService).deleteUsuario(anyLong());
 
         ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(1L);
-        assertEquals(204, response.getStatusCodeValue());
+        assertEquals(204, response.getStatusCode().value());
     }
 
     @Test
@@ -102,7 +101,7 @@ class UsuarioControllerTest {
         doThrow(new RuntimeException("Not found")).when(usuarioService).deleteUsuario(anyLong());
 
         ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(1L);
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
     }
 
     @Test
@@ -113,7 +112,7 @@ class UsuarioControllerTest {
         doReturn(true).when(usuarioService).checkPass(anyString(), anyString());
 
         ResponseEntity<String> response = usuarioController.viewPass("user", "pass");
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals("Correct Password", response.getBody());
     }
 
@@ -125,7 +124,7 @@ class UsuarioControllerTest {
         doReturn(false).when(usuarioService).checkPass(anyString(), anyString());
 
         ResponseEntity<String> response = usuarioController.viewPass("user", "pass");
-        assertEquals(401, response.getStatusCodeValue());
+        assertEquals(401, response.getStatusCode().value());
         assertEquals("Wrong Password", response.getBody());
     }
 
@@ -134,7 +133,7 @@ class UsuarioControllerTest {
         when(usuarioService.getUsuarioByUsuario(anyString())).thenReturn(Optional.empty());
 
         ResponseEntity<String> response = usuarioController.viewPass("user", "pass");
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
         assertEquals("Usuario no existente", response.getBody());
     }
 
@@ -146,7 +145,7 @@ class UsuarioControllerTest {
         doThrow(new NoSuchAlgorithmException()).when(usuarioService).checkPass(anyString(), anyString());
 
         ResponseEntity<String> response = usuarioController.viewPass("user", "pass");
-        assertEquals(500, response.getStatusCodeValue());
+        assertEquals(500, response.getStatusCode().value());
         assertEquals("Error", response.getBody());
     }
 
@@ -155,7 +154,7 @@ class UsuarioControllerTest {
         when(usuarioService.Admin(anyLong())).thenReturn(true);
 
         ResponseEntity<Boolean> response = usuarioController.Admin(1L);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(true, response.getBody());
     }
 }

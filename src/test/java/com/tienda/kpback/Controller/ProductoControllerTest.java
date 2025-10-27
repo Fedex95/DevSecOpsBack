@@ -48,7 +48,7 @@ class ProductoControllerTest {
         when(productoRepository.findAll()).thenReturn(mockList);
 
         ResponseEntity<List<Producto>> response = productoController.findAllProductos();
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockList, response.getBody());
     }
 
@@ -67,7 +67,7 @@ class ProductoControllerTest {
         when(productoService.saveProducto(any(Producto.class))).thenReturn(mockProducto);
 
         ResponseEntity<Producto> response = productoController.createProducto(1L, mockProducto);
-        assertEquals(201, response.getStatusCodeValue());
+        assertEquals(201, response.getStatusCode().value());
         assertEquals(mockProducto, response.getBody());
     }
 
@@ -76,7 +76,7 @@ class ProductoControllerTest {
         when(usuarioService.Admin(anyLong())).thenReturn(false);
 
         ResponseEntity<Producto> response = productoController.createProducto(1L, mockProducto);
-        assertEquals(403, response.getStatusCodeValue());
+        assertEquals(403, response.getStatusCode().value());
     }
 
     @Test
@@ -85,7 +85,7 @@ class ProductoControllerTest {
         when(productoService.updateProducto(any(Producto.class))).thenReturn(mockProducto);
 
         ResponseEntity<Producto> response = productoController.updateProducto(1L, 1L, mockProducto);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockProducto, response.getBody());
     }
 
@@ -94,7 +94,7 @@ class ProductoControllerTest {
         when(usuarioService.Admin(anyLong())).thenReturn(false);
 
         ResponseEntity<Producto> response = productoController.updateProducto(1L, 1L, mockProducto);
-        assertEquals(403, response.getStatusCodeValue());
+        assertEquals(403, response.getStatusCode().value());
     }
 
     @Test
@@ -103,7 +103,7 @@ class ProductoControllerTest {
         doNothing().when(productoService).deleteProducto(anyLong());
 
         ResponseEntity<Void> response = productoController.deleteProducto(1L, 1L);
-        assertEquals(204, response.getStatusCodeValue());
+        assertEquals(204, response.getStatusCode().value());
     }
 
     @Test
@@ -111,7 +111,7 @@ class ProductoControllerTest {
         when(usuarioService.Admin(anyLong())).thenReturn(false);
 
         ResponseEntity<Void> response = productoController.deleteProducto(1L, 1L);
-        assertEquals(403, response.getStatusCodeValue());
+        assertEquals(403, response.getStatusCode().value());
     }
 
     @Test
@@ -120,6 +120,6 @@ class ProductoControllerTest {
         doThrow(new RuntimeException("Error")).when(productoService).deleteProducto(anyLong());
 
         ResponseEntity<Void> response = productoController.deleteProducto(1L, 1L);
-        assertEquals(500, response.getStatusCodeValue());
+        assertEquals(500, response.getStatusCode().value());
     }
 }

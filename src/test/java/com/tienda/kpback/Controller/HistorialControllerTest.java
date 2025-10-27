@@ -39,7 +39,7 @@ public class HistorialControllerTest {
         when(historialService.findByUsuarioId(anyLong())).thenReturn(mockList);
 
         ResponseEntity<List<Historial>> response = historialController.getHistorial(1L);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockList, response.getBody());
     }
 
@@ -49,7 +49,7 @@ public class HistorialControllerTest {
         when(historialService.getHistorialAdmin(anyLong())).thenReturn(mockList);
 
         ResponseEntity<List<Historial>> response = historialController.getAllHistorials(1L);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(mockList, response.getBody());
     }
 
@@ -58,6 +58,6 @@ public class HistorialControllerTest {
         when(historialService.getHistorialAdmin(anyLong())).thenThrow(new RuntimeException("Access denied"));
 
         ResponseEntity<List<Historial>> response = historialController.getAllHistorials(1L);
-        assertEquals(403, response.getStatusCodeValue());
+        assertEquals(403, response.getStatusCode().value());
     }
 }
