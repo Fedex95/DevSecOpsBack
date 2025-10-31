@@ -3,18 +3,20 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "http://TU_IP_EC2:8082"
+        - "http://TU_IP_EC2:8082"   
       includePaths:
         - ".*"
-      excludePaths: []
   parameters:
-    failOnError: false  
+    failOnError: false
     progressToStdout: true
 jobs:
+  - type: openapi
+    parameters:
+      url: "OPENAPI_URL"            
   - type: spider
     parameters:
       context: "Default Context"
-      maxDuration: 5
+      maxDuration: 10
   - type: passiveScan-config
     parameters: {}
   - type: passiveScan-wait
@@ -25,8 +27,7 @@ jobs:
       maxRuleDurationInMins: 5
   - type: report
     parameters:
-      template: "traditional-html"
+      template: traditional-html
       reportDir: ""
-      reportFile: "report"
-      reportTitle: "ZAP DAST Report"
-      reportDescription: ""
+      reportFile: report
+      reportTitle: ZAP DAST Report
