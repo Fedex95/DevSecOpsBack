@@ -10,5 +10,6 @@ public class HomeController {
     @GetMapping("/")
     public ResponseEntity<String> home() {
         return ResponseEntity.ok("Backend API is running");
+        
     }
 }
