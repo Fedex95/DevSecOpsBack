@@ -12,7 +12,7 @@ env:
 jobs:
   - type: openapi
     parameters:
-      url: "OPENAPI_URL"            
+      apiUrl: "OPENAPI_URL"        
   - type: spider
     parameters:
       context: "Default Context"
