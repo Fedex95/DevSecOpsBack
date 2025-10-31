@@ -83,4 +83,9 @@ public class UsuarioController {
         boolean Admin = usuarioService.Admin(id);
         return ResponseEntity.ok(Admin);
     }
+
+    @GetMapping("/")
+    public ResponseEntity<String> home() {
+        return ResponseEntity.ok("Backend API is running");
+    }
 }
