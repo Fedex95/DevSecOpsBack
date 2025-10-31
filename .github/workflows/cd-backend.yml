@@ -48,6 +48,7 @@ jobs:
         run: |
           ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
             set -euo pipefail
+            export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-backend:${{ github.sha }}
             docker stop backend_preprod || true
             docker rm backend_preprod || true
