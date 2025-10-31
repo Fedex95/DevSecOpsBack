@@ -3,7 +3,7 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "http://localhost:8082"  
+        - "http://example.com"  
       includePaths:
         - ".*"
       excludePaths: []
@@ -16,11 +16,9 @@ jobs:
       context: "Default Context"
       maxDuration: 5
   - type: passiveScan-config
-    parameters:
-      context: "Default Context"
+    parameters: {}  
   - type: passiveScan-wait
-    parameters:
-      context: "Default Context"
+    parameters: {} 
   - type: activeScan
     parameters:
       context: "Default Context"
