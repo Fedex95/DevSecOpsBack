@@ -1,0 +1,32 @@
+---
+env:
+  contexts:
+    - name: "Default Context"
+      urls:
+        - "http://localhost:8082" 
+      includePaths:
+        - ".*"
+      excludePaths: []
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+jobs:
+  - type: spider
+    parameters:
+      context: "Default Context"
+      maxDuration: 5
+  - type: passiveScan
+    parameters:
+      context: "Default Context"
+  - type: activeScan
+    parameters:
+      context: "Default Context"
+      maxRuleDurationInMins: 5
+  - type: report
+    parameters:
+      template: "traditional-html"
+      reportDir: ""
+      reportFile: "report"
+      reportTitle: "ZAP DAST Report"
+      reportDescription: ""
