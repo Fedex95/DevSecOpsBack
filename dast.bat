@@ -6,7 +6,7 @@ if "%REPO_DIR%"=="" set "REPO_DIR=%CD%"
 
 cd /d "%ZAP_DIR%"
 
-call zap.bat -cmd -daemon ^
+call zap.bat -cmd ^
   -autorun "%REPO_DIR%\policy.yaml" ^
   -quickurl %ZAP_URL% ^
   -quickout "%REPO_DIR%\report.html"
