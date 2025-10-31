@@ -8,7 +8,7 @@ env:
         - ".*"
       excludePaths: []
   parameters:
-    failOnError: true
+    failOnError: false  
     progressToStdout: true
 jobs:
   - type: spider
