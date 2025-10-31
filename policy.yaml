@@ -3,7 +3,7 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "http://example.com"  
+        - "http://TU_IP_EC2:8082"
       includePaths:
         - ".*"
       excludePaths: []
@@ -16,9 +16,9 @@ jobs:
       context: "Default Context"
       maxDuration: 5
   - type: passiveScan-config
-    parameters: {}  
+    parameters: {}
   - type: passiveScan-wait
-    parameters: {} 
+    parameters: {}
   - type: activeScan
     parameters:
       context: "Default Context"

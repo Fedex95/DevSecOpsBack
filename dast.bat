@@ -9,6 +9,8 @@ cd /d "%ZAP_DIR%"
 set "ZAP_HOME=%TEMP%\zap_home_%RANDOM%"
 mkdir "%ZAP_HOME%" 2>nul
 
+powershell -Command "(Get-Content '%REPO_DIR%\policy.yaml') -replace 'TU_IP_EC2', '%ZAP_URL%' | Set-Content '%REPO_DIR%\policy.yaml'"
+
 call zap.bat -cmd ^
   -dir "%ZAP_HOME%" ^
   -autorun "%REPO_DIR%\policy.yaml" ^
