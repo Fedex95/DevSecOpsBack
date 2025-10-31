@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Run DAST with ZAP
         run: |
-          dast.bat
+          cmd /c dast.bat
         env:
           ZAP_URL: http://${{ secrets.EC2_PUBLIC_IP }}:8082
       - name: Upload DAST report
