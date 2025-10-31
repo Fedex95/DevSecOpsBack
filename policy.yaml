@@ -3,20 +3,22 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "http://localhost:8082" 
+        - "http://localhost:8082"  
       includePaths:
         - ".*"
       excludePaths: []
   parameters:
     failOnError: true
-    failOnWarning: false
     progressToStdout: true
 jobs:
   - type: spider
     parameters:
       context: "Default Context"
       maxDuration: 5
-  - type: passiveScan
+  - type: passiveScan-config
+    parameters:
+      context: "Default Context"
+  - type: passiveScan-wait
     parameters:
       context: "Default Context"
   - type: activeScan
