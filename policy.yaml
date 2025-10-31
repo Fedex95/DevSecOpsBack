@@ -3,7 +3,7 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "http://TU_IP_EC2:8082"   
+        - "http://TU_IP_EC2:8082"  
       includePaths:
         - ".*"
   parameters:
@@ -12,7 +12,8 @@ env:
 jobs:
   - type: openapi
     parameters:
-      apiUrl: "OPENAPI_URL"        
+      apiUrl: "OPENAPI_URL"      
+      context: "Default Context"
   - type: spider
     parameters:
       context: "Default Context"
