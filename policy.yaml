@@ -18,30 +18,36 @@ jobs:
     parameters:
       apiUrl: "OPENAPI_URL"
       context: "Default Context"
+
   - type: spider
     parameters:
       context: "Default Context"
       maxDuration: 8
       maxChildren: 300
+
   - type: passiveScan-config
     parameters: {}
+
   - type: passiveScan-wait
     parameters: {}
+
   - type: activeScan
     parameters:
       context: "Default Context"
       threadPerHost: 3
       maxRuleDurationInMins: 3
       maxScanDurationInMins: 15
+
   - type: report
     parameters:
       template: traditional-html
-      reportDir: "REPORT_DIR"
+      reportDir: 'REPORT_DIR'     
       reportFile: report
       reportTitle: "ZAP DAST Report"
+
   - type: report
     parameters:
       template: traditional-json
-      reportDir: "REPORT_DIR"
+      reportDir: 'REPORT_DIR'    
       reportFile: report
       reportTitle: "ZAP DAST Report"
