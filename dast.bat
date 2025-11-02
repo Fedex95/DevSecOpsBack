@@ -17,7 +17,6 @@ copy "%REPO_DIR%\policy.yaml" "%PLAN%" >nul
 
 powershell -Command "(Get-Content '%PLAN%') -replace 'FULL_URL','%ZAP_URL%' -replace 'HOSTPORT','%HOSTPORT%' -replace 'OPENAPI_URL','%ZAP_URL%/v3/api-docs' | Set-Content '%PLAN%'"
 
-REM Ejecuta ZAP y genera report.html + report.json
 call zap.bat -cmd -dir "%ZAP_HOME%" -autorun "%PLAN%" -quickurl %ZAP_URL% -quickout "%REPO_DIR%\report.html"
 
 exit /b %ERRORLEVEL%

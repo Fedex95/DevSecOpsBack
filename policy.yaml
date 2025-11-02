@@ -3,7 +3,7 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "FULL_URL"                
+        - "FULL_URL"                  
       includePaths:
         - "^FULL_URL/.*"              
       excludePaths:
@@ -15,7 +15,7 @@ env:
 jobs:
   - type: openapi
     parameters:
-      apiUrl: "OPENAPI_URL"           
+      apiUrl: "OPENAPI_URL"
       context: "Default Context"
 
   - type: spider
@@ -41,7 +41,6 @@ jobs:
       maxRuleDurationInMins: 3
       maxScanDurationInMins: 15
 
-  # Reporte HTML
   - type: report
     parameters:
       template: traditional-html
@@ -49,7 +48,6 @@ jobs:
       reportFile: report
       reportTitle: "ZAP DAST Report"
 
-  # Reporte JSON 
   - type: report
     parameters:
       template: traditional-json
