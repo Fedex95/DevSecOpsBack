@@ -15,11 +15,7 @@ set "HOSTPORT=%HOSTPORT:https://=%"
 set "PLAN=%TEMP%\zap_plan.yaml"
 copy "%REPO_DIR%\policy.yaml" "%PLAN%" >nul
 
-powershell -Command "(Get-Content '%PLAN%') `
-  -replace 'FULL_URL','%ZAP_URL%' `
-  -replace 'HOSTPORT','%HOSTPORT%' `
-  -replace 'OPENAPI_URL','%ZAP_URL%/v3/api-docs' `
-  -replace 'REPORT_DIR','%REPO_DIR%' | Set-Content '%PLAN%'"
+powershell -NoProfile -Command "$p='%PLAN%';$c=Get-Content -Raw -Path $p; $c=$c.Replace('FULL_URL','%ZAP_URL%').Replace('HOSTPORT','%HOSTPORT%').Replace('OPENAPI_URL','%ZAP_URL%/v3/api-docs').Replace('REPORT_DIR','%REPO_DIR%'); Set-Content -Path $p -Value $c"
 
 call zap.bat -cmd -dir "%ZAP_HOME%" -autorun "%PLAN%"
 
