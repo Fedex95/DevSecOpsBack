@@ -10,6 +10,7 @@ env:
         - "^https?://(?!HOSTPORT).*"  
   parameters:
     failOnError: false
+    failOnWarning: false             
     progressToStdout: true
 
 jobs:
@@ -21,7 +22,6 @@ jobs:
   - type: spider
     parameters:
       context: "Default Context"
-      inScopeOnly: true
       maxDuration: 8
       maxChildren: 300
 
@@ -34,9 +34,6 @@ jobs:
   - type: activeScan
     parameters:
       context: "Default Context"
-      inScopeOnly: true
-      attackStrength: LOW
-      alertThreshold: MEDIUM
       threadPerHost: 3
       maxRuleDurationInMins: 3
       maxScanDurationInMins: 15
@@ -44,13 +41,13 @@ jobs:
   - type: report
     parameters:
       template: traditional-html
-      reportDir: ""
+      reportDir: "REPORT_DIR"         
       reportFile: report
       reportTitle: "ZAP DAST Report"
 
   - type: report
     parameters:
       template: traditional-json
-      reportDir: ""
+      reportDir: "REPORT_DIR"
       reportFile: report
       reportTitle: "ZAP DAST Report"
