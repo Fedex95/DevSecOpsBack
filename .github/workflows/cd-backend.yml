@@ -65,6 +65,7 @@ jobs:
     name: Run DAST on Preproduction
     runs-on: self-hosted
     needs: deploy-staging
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -73,12 +74,25 @@ jobs:
         run: dast.bat "%GITHUB_WORKSPACE%"
         env:
           ZAP_URL: http://${{ secrets.EC2_PUBLIC_IP }}:8082
+      - name: Fail on High/Medium alerts
+        shell: pwsh
+        run: |
+          if (!(Test-Path "report.json")) { Write-Error "report.json not found"; exit 1 }
+          $json = Get-Content -Raw -Path "report.json" | ConvertFrom-Json
+          $alerts = @()
+          foreach ($site in $json.site) { $alerts += $site.alerts }
+          $high   = ($alerts | Where-Object { $_.riskdesc -like "High*" }).Count
+          $medium = ($alerts | Where-Object { $_.riskdesc -like "Medium*" }).Count
+          Write-Host "ZAP alerts => High: $high, Medium: $medium"
+          if ($high -gt 0 -or $medium -gt 0) { throw "Failing pipeline: High=$high Medium=$medium" }
       - name: Upload DAST report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dast-report
-          path: report.html
+          path: |
+            report.html
+            report.json
 
   deploy-production:
     name: Deploy to Production

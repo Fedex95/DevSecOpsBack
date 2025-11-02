@@ -9,10 +9,15 @@ cd /d "%ZAP_DIR%"
 set "ZAP_HOME=%TEMP%\zap_home_%RANDOM%"
 mkdir "%ZAP_HOME%" 2>nul
 
+set "HOSTPORT=%ZAP_URL:http://=%"
+set "HOSTPORT=%HOSTPORT:https://=%"
+
 set "PLAN=%TEMP%\zap_plan.yaml"
 copy "%REPO_DIR%\policy.yaml" "%PLAN%" >nul
 
-powershell -Command "(Get-Content '%PLAN%') -replace 'http://TU_IP_EC2:8082','%ZAP_URL%' -replace 'OPENAPI_URL','%ZAP_URL%/v3/api-docs' | Set-Content '%PLAN%'"
+powershell -Command "(Get-Content '%PLAN%') -replace 'FULL_URL','%ZAP_URL%' -replace 'HOSTPORT','%HOSTPORT%' -replace 'OPENAPI_URL','%ZAP_URL%/v3/api-docs' | Set-Content '%PLAN%'"
 
+REM Ejecuta ZAP y genera report.html + report.json
 call zap.bat -cmd -dir "%ZAP_HOME%" -autorun "%PLAN%" -quickurl %ZAP_URL% -quickout "%REPO_DIR%\report.html"
+
 exit /b %ERRORLEVEL%
