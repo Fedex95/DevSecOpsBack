@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM openjdk:18-jdk-slim
 
 COPY target/*.jar app.jar
 
