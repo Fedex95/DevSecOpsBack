@@ -34,9 +34,11 @@ jobs:
   - type: activeScan
     parameters:
       context: "Default Context"
-      threadPerHost: 3
-      maxRuleDurationInMins: 3
-      maxScanDurationInMins: 15
+      attackStrength: HIGH         
+      alertThreshold: LOW           
+      threadPerHost: 5              
+      maxRuleDurationInMins: 5      
+      maxScanDurationInMins: 20     
 
   - type: report
     parameters:
