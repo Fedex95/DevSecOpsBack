@@ -1,4 +1,4 @@
-FROM openjdk:18-slim
+FROM openjdk:18
 
 COPY target/*.jar app.jar
 
