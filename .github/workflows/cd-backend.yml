@@ -24,8 +24,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/deploy-DevSecOpsbackend:${{ github.sha }} .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-DevSecOps-backend:${{ github.sha }}
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }} .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecopsbackend:${{ github.sha }}
 
   deploy-staging:
     name: Deploy to Preproduction
@@ -49,14 +49,14 @@ jobs:
           ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
             export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-DevSecOps-backend:${{ github.sha }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
             docker stop backend_preprod || true
             docker rm backend_preprod || true
             docker run -d --name backend_preprod --network bdd_nginx_app-network -p 8082:8080 \
               -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/kgpc \
               -e SPRING_DATASOURCE_USERNAME=postgres \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
-              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-DevSecOps-backend:${{ github.sha }}
+              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
           EOF
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -125,14 +125,14 @@ jobs:
         run: |
           ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-DevSecOps-backend:${{ github.sha }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
             docker stop backend_prod || true
             docker rm backend_prod || true
             docker run -d --name backend_prod --network bdd_nginx_app-network -p 8080:8080 \
               -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/kgpc \
               -e SPRING_DATASOURCE_USERNAME=postgres \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
-              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-DevSecOps-backend:${{ github.sha }}
+              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
           EOF
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
