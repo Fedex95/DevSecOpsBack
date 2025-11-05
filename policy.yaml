@@ -3,13 +3,13 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "FULL_URL"
+        - "FULL_URL"                      
       includePaths:
-        - "^FULL_URL/.*"
+        - "^FULL_URL/.*"                   
       excludePaths:
-        - "^https?://(?!HOSTPORT).*"
+        - "^https?://(?!HOSTPORT).*"       
   parameters:
-    failOnError: false
+    failOnError: false                    
     failOnWarning: false
     progressToStdout: true
 
@@ -18,11 +18,6 @@ jobs:
     parameters:
       apiUrl: "OPENAPI_URL"
       context: "Default Context"
-
-  - type: activeScan-config
-    parameters:
-      defaultAttackStrength: High  
-      defaultAlertThreshold: Low
 
   - type: spider
     parameters:
@@ -36,6 +31,27 @@ jobs:
   - type: passiveScan-wait
     parameters: {}
 
+  - type: activeScan-config
+    parameters:
+      threadPerHost: 5
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 20
+      handleAntiCSRFTokens: true
+      injectPluginIdInHeader: true
+    rules:
+      - id: 40018   # SQL Injection
+        attackStrength: High
+        alertThreshold: Low
+      - id: 90020   # SQL Injection - Time Based
+        attackStrength: Medium
+        alertThreshold: Low
+      - id: 40012   # XSS (Reflected)
+        attackStrength: High
+        alertThreshold: Low
+      - id: 40014   # XSS (Stored)
+        attackStrength: High
+        alertThreshold: Low
+
   - type: activeScan
     parameters:
       context: "Default Context"
@@ -46,7 +62,7 @@ jobs:
   - type: report
     parameters:
       template: traditional-html
-      reportDir: 'REPORT_DIR'
+      reportDir: 'REPORT_DIR'            
       reportFile: report
       reportTitle: "ZAP DAST Report"
 
