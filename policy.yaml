@@ -3,13 +3,13 @@ env:
   contexts:
     - name: "Default Context"
       urls:
-        - "FULL_URL"                      
+        - "FULL_URL"
       includePaths:
-        - "^FULL_URL/.*"                   
+        - "^FULL_URL/.*"
       excludePaths:
-        - "^https?://(?!HOSTPORT).*"       
+        - "^https?://(?!HOSTPORT).*"
   parameters:
-    failOnError: false                    
+    failOnError: false
     failOnWarning: false
     progressToStdout: true
 
@@ -38,19 +38,6 @@ jobs:
       maxScanDurationInMins: 20
       handleAntiCSRFTokens: true
       injectPluginIdInHeader: true
-    rules:
-      - id: 40018   # SQL Injection
-        attackStrength: High
-        alertThreshold: Low
-      - id: 90020   # SQL Injection - Time Based
-        attackStrength: Medium
-        alertThreshold: Low
-      - id: 40012   # XSS (Reflected)
-        attackStrength: High
-        alertThreshold: Low
-      - id: 40014   # XSS (Stored)
-        attackStrength: High
-        alertThreshold: Low
 
   - type: activeScan
     parameters:
@@ -58,11 +45,27 @@ jobs:
       threadPerHost: 5
       maxRuleDurationInMins: 5
       maxScanDurationInMins: 20
+    policyDefinition:
+      defaultStrength: Medium
+      defaultThreshold: Low
+      rules:
+        - id: 40018   # SQL Injection
+          strength: High
+          threshold: Low
+        - id: 90020   # SQLi - Time Based
+          strength: Medium
+          threshold: Low
+        - id: 40012   # XSS (Reflected)
+          strength: High
+          threshold: Low
+        - id: 40014   # XSS (Stored)
+          strength: High
+          threshold: Low
 
   - type: report
     parameters:
       template: traditional-html
-      reportDir: 'REPORT_DIR'            
+      reportDir: 'REPORT_DIR'
       reportFile: report
       reportTitle: "ZAP DAST Report"
 
