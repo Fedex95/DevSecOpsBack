@@ -25,7 +25,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }} .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecopsbackend:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
 
   deploy-staging:
     name: Deploy to Preproduction
