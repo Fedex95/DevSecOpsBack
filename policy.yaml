@@ -19,6 +19,11 @@ jobs:
       apiUrl: "OPENAPI_URL"
       context: "Default Context"
 
+  - type: activeScan-config
+    parameters:
+      defaultAttackStrength: High  
+      defaultAlertThreshold: Low
+
   - type: spider
     parameters:
       context: "Default Context"
@@ -34,22 +39,20 @@ jobs:
   - type: activeScan
     parameters:
       context: "Default Context"
-      attackStrength: HIGH         
-      alertThreshold: LOW           
-      threadPerHost: 5              
-      maxRuleDurationInMins: 5      
-      maxScanDurationInMins: 20     
+      threadPerHost: 5
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 20
 
   - type: report
     parameters:
       template: traditional-html
-      reportDir: 'REPORT_DIR'     
+      reportDir: 'REPORT_DIR'
       reportFile: report
       reportTitle: "ZAP DAST Report"
 
   - type: report
     parameters:
       template: traditional-json
-      reportDir: 'REPORT_DIR'    
+      reportDir: 'REPORT_DIR'
       reportFile: report
       reportTitle: "ZAP DAST Report"
