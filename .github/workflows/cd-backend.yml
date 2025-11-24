@@ -24,8 +24,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }} .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }} .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
 
   deploy-staging:
     name: Deploy to Preproduction
@@ -58,7 +58,7 @@ jobs:
           ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
             echo "Pulling image from Docker Hub..."
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
             echo "Stopping old container if exists..."
             docker stop ${CONTAINER_NAME} || echo "No container running"
             docker rm ${CONTAINER_NAME} || echo "No container to remove"
@@ -68,7 +68,7 @@ jobs:
               -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
               -e JWT_SECRET="${JWT_SECRET}" \ 
-              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
+              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
             echo "Verifying container..."
             docker ps
             echo "Last logs:"
@@ -151,7 +151,7 @@ jobs:
           ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
             echo "Pulling image from Docker Hub..."
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
             echo "Stopping old container if exists..."
             docker stop ${CONTAINER_NAME} || echo "No container running"
             docker rm ${CONTAINER_NAME} || echo "No container to remove"
@@ -161,7 +161,7 @@ jobs:
               -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
               -e JWT_SECRET="${JWT_SECRET}" \ 
-              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
+              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
             echo "Verifying container..."
             docker ps
             echo "Last logs:"
