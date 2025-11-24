@@ -82,9 +82,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Run DAST with ZAP
-        shell: powershell
-        run: |
-          cmd /c dast.bat "%GITHUB_WORKSPACE%"
+        shell: cmd
+        run: .\dast.bat "%GITHUB_WORKSPACE%"
         env:
           ZAP_URL: http://${{ secrets.EC2_PUBLIC_IP }}:8082
       - name: Fail on High/Medium alerts only (ignore Low/Informational)
