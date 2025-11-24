@@ -35,7 +35,9 @@ jobs:
       SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }} 
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }} 
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }} 
       CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_STAGING }}
       NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
       CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_STAGING }}
