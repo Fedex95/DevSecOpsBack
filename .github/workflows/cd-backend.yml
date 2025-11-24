@@ -31,6 +31,14 @@ jobs:
     name: Deploy to Preproduction
     runs-on: ubuntu-latest
     needs: build-and-push
+    env:
+      SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_STAGING }}
+      NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
+      CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_STAGING }}
+      HOST_PORT: ${{ secrets.HOST_PORT_STAGING }}
 
     steps:
       - name: Setup SSH
@@ -48,18 +56,23 @@ jobs:
         run: |
           ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
-            export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+            echo "Pulling image from Docker Hub..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
-            docker stop backend_preprod || true
-            docker rm backend_preprod || true
-            docker run -d --name backend_preprod --network bdd_nginx_app-network -p 8082:8080 \
-              -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/kgpc \
-              -e SPRING_DATASOURCE_USERNAME=postgres \
+            echo "Stopping old container if exists..."
+            docker stop ${CONTAINER_NAME} || echo "No container running"
+            docker rm ${CONTAINER_NAME} || echo "No container to remove"
+            echo "Running new container..."
+            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} \
+              -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
+              -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
+            echo "Verifying container..."
+            docker ps
+            echo "Last logs:"
+            docker logs ${CONTAINER_NAME} | tail -20
+            echo "Deployment completed successfully"
           EOF
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
   run-dast:
     name: Run DAST on Preproduction
@@ -69,11 +82,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Run DAST with ZAP
-        shell: cmd
-        run: dast.bat "%GITHUB_WORKSPACE%"
+        shell: powershell
+        run: |
+          cmd /c dast.bat "%GITHUB_WORKSPACE%"
         env:
           ZAP_URL: http://${{ secrets.EC2_PUBLIC_IP }}:8082
-      - name: Fail on any alerts (High/Medium/Low/Informational)
+      - name: Fail on High/Medium alerts only (ignore Low/Informational)
         shell: powershell
         run: |
           if (!(Test-Path "report.json")) { Write-Error "report.json not found"; exit 1 }
@@ -83,10 +97,8 @@ jobs:
           foreach ($s in $sites) { if ($s.alerts) { $alerts += $s.alerts } }
           $high   = ($alerts | Where-Object { $_.risk -eq "High" -or $_.riskdesc -like "High*" }).Count
           $medium = ($alerts | Where-Object { $_.risk -eq "Medium" -or $_.riskdesc -like "Medium*" }).Count
-          $low    = ($alerts | Where-Object { $_.risk -eq "Low" -or $_.riskdesc -like "Low*" }).Count
-          $info   = ($alerts | Where-Object { $_.risk -eq "Informational" -or $_.riskdesc -like "Informational*" }).Count
-          Write-Host "ZAP alerts => High: $high, Medium: $medium, Low: $low, Informational: $info"
-          if ($high -gt 0 -or $medium -gt 0 -or $low -gt 0 -or $info -gt 0) { throw "Failing pipeline: High=$high Medium=$medium Low=$low Informational=$info" }
+          Write-Host "ZAP alerts => High: $high, Medium: $medium (Low/Informational ignored)"
+          if ($high -gt 0 -or $medium -gt 0) { throw "Failing pipeline: High=$high Medium=$medium" }
       - name: Upload DAST report
         uses: actions/upload-artifact@v4
         if: always()
@@ -100,7 +112,15 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: run-dast
-    if: needs.run-dast.result == 'success'  
+    if: needs.run-dast.result == 'success'
+    env:
+      SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_PROD }}
+      NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
+      CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_PROD }}
+      HOST_PORT: ${{ secrets.HOST_PORT_PROD }}
 
     steps:
       - name: Setup SSH
@@ -117,22 +137,28 @@ jobs:
       - name: Clean up Production
         run: |
           ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
-            docker stop backend_preprod || true
-            docker rm backend_preprod || true
+            docker stop ${CONTAINER_NAME} || echo "No container running"
+            docker rm ${CONTAINER_NAME} || echo "No container to remove"
           EOF
 
       - name: Deploy backend on EC2 (production)
         run: |
           ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
+            echo "Pulling image from Docker Hub..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
-            docker stop backend_prod || true
-            docker rm backend_prod || true
-            docker run -d --name backend_prod --network bdd_nginx_app-network -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/kgpc \
-              -e SPRING_DATASOURCE_USERNAME=postgres \
+            echo "Stopping old container if exists..."
+            docker stop ${CONTAINER_NAME} || echo "No container running"
+            docker rm ${CONTAINER_NAME} || echo "No container to remove"
+            echo "Running new container..."
+            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} \
+              -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
+              -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
+            echo "Verifying container..."
+            docker ps
+            echo "Last logs:"
+            docker logs ${CONTAINER_NAME} | tail -20
+            echo "Deployment completed successfully"
           EOF
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}

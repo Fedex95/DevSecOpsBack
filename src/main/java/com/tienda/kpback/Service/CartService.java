@@ -3,11 +3,12 @@ package com.tienda.kpback.Service;
 import com.tienda.kpback.Entity.*;
 import com.tienda.kpback.Repository.CartItemRepository;
 import com.tienda.kpback.Repository.CartRepository;
-//import com.tienda.kpback.Repository.HistorialRepository;
 import com.tienda.kpback.Repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;  
 
 @Service
 public class CartService {
@@ -18,115 +19,76 @@ public class CartService {
     private CartItemRepository cartItemRepository;
 
     @Autowired
-    private ProductoService productoService;
+    private LibroService libroService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    //@Autowired
-    //private HistorialService historialService;
-
-    //@Autowired
-    //private HistorialRepository historialRepository;
-
-    //@Autowired
-    //private NotificacionesService  notificacionesService;
-
-    public Cart createCarrito(Long usuarioId){
+    public Cart getCartByUsuarioId(UUID usuarioId) { 
         UsuarioEnt usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(()-> new RuntimeException("Usuario no encontrado"));
-
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         return cartRepository.findByUsuario(usuario)
-                .orElseGet(()-> {
-                    Cart newcart = new Cart();
-                    newcart.setUsuario(usuario);
-                    return cartRepository.save(newcart);
+                .orElseGet(() -> {
+                    Cart newCart = new Cart();
+                    newCart.setUsuario(usuario);
+                    return cartRepository.save(newCart);
                 });
     }
 
-    public Cart addItemToCart(Long usuarioId, Long productoId, int cantidad){
-        Cart cart = createCarrito(usuarioId);
-        Producto producto = productoService.getProductoById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+    public Cart addItemToCart(UUID usuarioId, UUID libroId, int cantidad) {  
+        Cart cart = getCartByUsuarioId(usuarioId);
+        Libro libro = libroService.getLibroById(libroId)  
+                .orElseThrow(() -> new RuntimeException("Libro no encontrado"));
 
-        CartItem item = new CartItem();
-        item.setCart(cart);
-        item.setProducto(producto);
-        item.setCantidad(cantidad);
+        CartItem existingItem = cart.getItems().stream()
+                .filter(item -> item.getLibro().getId().equals(libroId))  
+                .findFirst()
+                .orElse(null);
 
-        cart.getItems().add(item);
-
-        cartItemRepository.save(item);
-        cart = cartRepository.save(cart);
-
-        UsuarioEnt usuario = cart.getUsuario();
-        if(usuario != null){
-            usuario.setCart(cart);
-            usuarioRepository.save(usuario);
+        if (existingItem != null) {
+            existingItem.setCantidad(existingItem.getCantidad() + cantidad);
+            cartItemRepository.save(existingItem);
+        } else {
+            CartItem item = new CartItem();
+            item.setCart(cart);
+            item.setLibro(libro);
+            item.setCantidad(cantidad);
+            cart.getItems().add(item);
+            cartItemRepository.save(item);
         }
-        return cart;
+
+        return cartRepository.save(cart);
     }
 
-    public Cart updateItemCart(Long cartItemId, int cantidad){
+    public Cart updateItemCart(UUID cartItemId, int cantidad, UUID usuarioId) {  
         CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(()-> new RuntimeException("Item no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Item no encontrado"));
+        if (!item.getCart().getUsuario().getId().equals(usuarioId)) { 
+            throw new RuntimeException("No autorizado para actualizar este item");
+        }
         item.setCantidad(cantidad);
         cartItemRepository.save(item);
         return item.getCart();
     }
 
-    public void deleteItemCart(Long cartId, Long itemId){
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(()-> new RuntimeException("Carrito no encontrado"));
-
+    public void deleteItemCart(UUID usuarioId, UUID itemId) {  
+        UsuarioEnt usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Cart cart = cartRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
         CartItem itemDelete = cart.getItems().stream()
                 .filter(item -> item.getId().equals(itemId))
                 .findFirst()
-                .orElseThrow(()-> new RuntimeException("Item no encontrado en el carrito"));
-
+                .orElseThrow(() -> new RuntimeException("Item no encontrado en el carrito"));
         cart.getItems().remove(itemDelete);
-
         cartItemRepository.delete(itemDelete);
-
         cartRepository.save(cart);
     }
 
     @Transactional
-    public void Pago(Long cartId){
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(()-> new RuntimeException("Carrito no encontrado"));
-
-        double total = calcularTot(cart);
-        System.out.println(total);
-
-        boolean pagado = realizarPago(total);
-
-        if(pagado){
-            //Historial historial = historialService.addCompra(cart);
-
-            cart.getItems().clear();
-
-            cartRepository.save(cart);
-/* 
-            String mta = "Compra realizada por" + cart.getUsuario().getNombre() +
-                    " , ID del pedido: " + historial.getId();
-            notificacionesService.notificarAdmin(cart.getUsuario(), mta);
-
-            System.out.println("Pago exitoso //");
-            */
-        }else {
-            throw new RuntimeException("Error al realizar Pago");
-        }
-    }
-
-    private double calcularTot(Cart cart){
-        double total = 0.0;
-        for(CartItem item : cart.getItems()){
-            total += item.getProducto().getPrecio() * item.getCantidad();
-        }
-        return total;
-    }
-    private boolean realizarPago(double total){
-        return true;
+    public void clearCart(UUID usuarioId) {
+        Cart cart = getCartByUsuarioId(usuarioId);
+        cart.getItems().clear();
+        cartRepository.save(cart);
     }
 }

@@ -1,30 +1,29 @@
 package com.tienda.kpback.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.UUID;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;  
 @Entity
 @Getter
 @Setter
-@Table(name = "cart_items")
-public class CartItem {
+@Table(name = "detalles_prestamo")  
+public class DetallePrestamo {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)  
     @Column(columnDefinition = "uuid default gen_random_uuid()")
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "carrito_id", referencedColumnName = "id")
-    @JsonBackReference
-    private Cart cart;
+    @JoinColumn(name = "prestamo_id")
+    @JsonIgnore  
+    private Prestamo prestamo;
 
-    @ManyToOne
-    @JoinColumn(name = "libro_id", referencedColumnName = "id") 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "libro_id", nullable = false) 
     private Libro libro;
 
     @Column(nullable = false)
-    private int cantidad = 1;
+    private int cantidad = 1;  
 }

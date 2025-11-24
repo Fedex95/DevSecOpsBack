@@ -8,13 +8,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.tienda.kpback.Config.CustomUserDetails;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;  
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,59 +28,67 @@ class CartControllerTest {
     @InjectMocks
     private CartController cartController;
 
+    @Mock
+    private CustomUserDetails userDetails;
+
+    private UUID mockUserId; 
+    private UUID mockLibroId; 
+    private UUID mockCartItemId; 
+
     @BeforeEach
     void setUp() {
+        mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");  
+        mockLibroId = UUID.fromString("456e7890-e89b-12d3-a456-426614174001");  
+        mockCartItemId = UUID.fromString("789e0123-e89b-12d3-a456-426614174002"); 
     }
 
     @Test
-    void testGetCartByUsuarioId() {
+    void testGetCart() {
+        when(userDetails.getUserId()).thenReturn(mockUserId);  
         Cart mockCart = new Cart();
-        when(cartService.createCarrito(anyLong())).thenReturn(mockCart);
+        when(cartService.getCartByUsuarioId(mockUserId)).thenReturn(mockCart);  
 
-        ResponseEntity<Cart> response = cartController.getCartByUsuarioId(1L);
-        assertEquals(200, response.getStatusCodeValue());
+        ResponseEntity<Cart> response = cartController.getCart(userDetails);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(mockCart, response.getBody());
+        verify(cartService).getCartByUsuarioId(mockUserId); 
     }
 
     @Test
     void testAddItemToCart() {
+        when(userDetails.getUserId()).thenReturn(mockUserId); 
         Cart mockCart = new Cart();
-        when(cartService.addItemToCart(anyLong(), anyLong(), anyInt())).thenReturn(mockCart);
+        when(cartService.addItemToCart(mockUserId, mockLibroId, 3)).thenReturn(mockCart);  
 
         Map<String, Object> request = new HashMap<>();
-        request.put("usuarioId", 1L);
-        request.put("productoId", 2L);
+        request.put("libroId", mockLibroId.toString()); 
         request.put("cantidad", 3);
 
-        ResponseEntity<Cart> response = cartController.addItemToCart(request);
-        assertEquals(200, response.getStatusCodeValue());
+        ResponseEntity<Cart> response = cartController.addItemToCart(userDetails, request);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(mockCart, response.getBody());
+        verify(cartService).addItemToCart(mockUserId, mockLibroId, 3); 
     }
 
     @Test
     void testUpdateItemCantidad() {
+        when(userDetails.getUserId()).thenReturn(mockUserId);  
         Cart mockCart = new Cart();
-        when(cartService.updateItemCart(anyLong(), anyInt())).thenReturn(mockCart);
+        when(cartService.updateItemCart(mockCartItemId, 5, mockUserId)).thenReturn(mockCart); 
 
-        ResponseEntity<Cart> response = cartController.updateItemCantidad(1L, 5);
-        assertEquals(200, response.getStatusCodeValue());
+        ResponseEntity<Cart> response = cartController.updateItemCantidad(userDetails, mockCartItemId, 5);  
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(mockCart, response.getBody());
+        verify(cartService).updateItemCart(mockCartItemId, 5, mockUserId);  
     }
 
     @Test
     void testDeleteItemCart() {
-        doNothing().when(cartService).deleteItemCart(anyLong(), anyLong());
+        when(userDetails.getUserId()).thenReturn(mockUserId); 
+        doNothing().when(cartService).deleteItemCart(mockUserId, mockCartItemId);  
 
-        ResponseEntity<Void> response = cartController.deleteItemCart(1L, 2L);
-        assertEquals(204, response.getStatusCodeValue());
-    }
-
-    @Test
-    void testPayCart() {
-        doNothing().when(cartService).Pago(anyLong());
-
-        ResponseEntity<Map<String, String>> response = cartController.payCart(1L);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals("success", response.getBody().get("status"));
+        ResponseEntity<Void> response = cartController.deleteItemCart(userDetails, mockCartItemId); 
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(cartService).deleteItemCart(mockUserId, mockCartItemId);
     }
 }

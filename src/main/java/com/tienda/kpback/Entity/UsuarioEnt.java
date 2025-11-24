@@ -1,19 +1,23 @@
 package com.tienda.kpback.Entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Getter
 @Setter
 @Table(name="usuarios")
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class UsuarioEnt {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)  
+    @Column(columnDefinition = "uuid default gen_random_uuid()") 
+    private UUID id;
     private String nombre;
     private String apellido;
 
@@ -23,17 +27,13 @@ public class UsuarioEnt {
     private String cedula;
     @Column(unique=true)
     private String email;
-
-    private String pass;
+    @Column(unique=true)
     private String telefono;
-    private String direccion;
-    private String nombreTarjeta;
-    private String numeroTarjeta;
-    private String fechaValidez;
-    private String cvv;
+    @JsonIgnore
+    private String pass;
 
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JsonManagedReference
+    @JsonIgnore
     private Cart cart;
 
     @Enumerated(EnumType.STRING)
@@ -42,4 +42,10 @@ public class UsuarioEnt {
         ADMIN,
         USER
     }
+
+    @Column(nullable = true)  
+    private boolean verified = false; 
+
+    @Column
+    private String verificationCode;  
 }
