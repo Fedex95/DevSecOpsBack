@@ -63,12 +63,7 @@ jobs:
             docker stop ${CONTAINER_NAME} || echo "No container running"
             docker rm ${CONTAINER_NAME} || echo "No container to remove"
             echo "Running new container..."
-            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} \
-              -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
-              -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
-              -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
-              -e JWT_SECRET="${JWT_SECRET}" \ 
-              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
+            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
             echo "Verifying container..."
             docker ps
             echo "Last logs:"
@@ -156,12 +151,7 @@ jobs:
             docker stop ${CONTAINER_NAME} || echo "No container running"
             docker rm ${CONTAINER_NAME} || echo "No container to remove"
             echo "Running new container..."
-            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} \
-              -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
-              -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
-              -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
-              -e JWT_SECRET="${JWT_SECRET}" \ 
-              ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
+            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.run_number }}
             echo "Verifying container..."
             docker ps
             echo "Last logs:"
