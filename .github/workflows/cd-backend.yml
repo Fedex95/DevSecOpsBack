@@ -35,6 +35,7 @@ jobs:
       SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }} 
       CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_STAGING }}
       NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
       CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_STAGING }}
@@ -66,6 +67,7 @@ jobs:
               -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
               -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
+              -e JWT_SECRET="${JWT_SECRET}" \ 
               ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
             echo "Verifying container..."
             docker ps
@@ -118,6 +120,7 @@ jobs:
       SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}  
       CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_PROD }}
       NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
       CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_PROD }}
@@ -156,6 +159,7 @@ jobs:
               -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
               -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
               -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" \
+              -e JWT_SECRET="${JWT_SECRET}" \ 
               ${{ secrets.DOCKERHUB_USERNAME }}/deploy-devsecops-backend:${{ github.sha }}
             echo "Verifying container..."
             docker ps
