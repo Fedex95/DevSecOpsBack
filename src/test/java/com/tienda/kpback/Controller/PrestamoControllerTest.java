@@ -3,7 +3,9 @@ package com.tienda.kpback.Controller;
 import com.tienda.kpback.Entity.Prestamo;
 import com.tienda.kpback.Service.PrestamoService;
 import com.tienda.kpback.Service.CartService;
+import com.tienda.kpback.Service.TicketService;
 import com.tienda.kpback.Entity.Cart;
+import com.tienda.kpback.Entity.Ticket;
 import com.tienda.kpback.Repository.PrestamoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import java.util.UUID;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
+import java.util.Optional;
 import com.tienda.kpback.Entity.CartItem; 
 
 
@@ -34,6 +37,9 @@ public class PrestamoControllerTest {
 
     @Mock
     private CartService cartService;
+
+    @Mock
+    private TicketService ticketService;
 
     @Mock
     private PrestamoRepository prestamoRepository;
@@ -52,11 +58,13 @@ public class PrestamoControllerTest {
 
     private UUID mockUserId;
     private Cart mockCart;
+    private Ticket mockTicket;
 
     @BeforeEach
     void setUp() {
         mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
         mockCart = mock(Cart.class);
+        mockTicket = new Ticket();
         when(mockPrestamo.getUsuario()).thenReturn(mockUsuario);
         when(mockUsuario.getId()).thenReturn(mockUserId);
     }
@@ -90,6 +98,7 @@ public class PrestamoControllerTest {
         ResponseEntity<?> response = prestamoController.createPrestamo(userDetails);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(mockPrestamo, response.getBody());
+        verify(ticketService).generateTicket(mockPrestamo);
         verify(cartService).clearCart(mockUserId);
     }
 
@@ -141,5 +150,34 @@ public class PrestamoControllerTest {
 
         ResponseEntity<?> response = prestamoController.updateEstado(mockUserId, request, userDetails);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void testGetTicket_Success() {
+        when(prestamoRepository.findById(mockUserId)).thenReturn(Optional.of(mockPrestamo));
+        when(userDetails.getId()).thenReturn(mockUserId);
+        when(prestamoService.findTicketByPrestamoId(mockUserId)).thenReturn(Optional.of(mockTicket));
+
+        ResponseEntity<Ticket> response = prestamoController.getTicket(mockUserId, userDetails);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(mockTicket, response.getBody());
+    }
+
+    @Test
+    void testGetTicket_NotFound() {
+        when(prestamoRepository.findById(mockUserId)).thenReturn(Optional.empty());
+
+        ResponseEntity<Ticket> response = prestamoController.getTicket(mockUserId, userDetails);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void testGetTicket_Forbidden() {
+        when(prestamoRepository.findById(mockUserId)).thenReturn(Optional.of(mockPrestamo));
+        when(userDetails.getId()).thenReturn(UUID.randomUUID());  
+        when(userDetails.getRol()).thenReturn(UsuarioEnt.Rol.USER);
+
+        ResponseEntity<Ticket> response = prestamoController.getTicket(mockUserId, userDetails);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 }

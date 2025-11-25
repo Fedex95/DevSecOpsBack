@@ -3,17 +3,23 @@ package com.tienda.kpback.Controller;
 import com.tienda.kpback.Entity.Prestamo;
 import com.tienda.kpback.Service.PrestamoService;
 import com.tienda.kpback.Service.CartService;  
+import com.tienda.kpback.Service.TicketService;  
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 import com.tienda.kpback.Entity.UsuarioEnt;
+import com.tienda.kpback.Entity.Ticket;
+import com.tienda.kpback.Repository.PrestamoRepository;
 
 @RestController
 @RequestMapping("/api/prestamos")
+@SecurityRequirement(name = "bearerAuth")
 
 public class PrestamoController {
     @Autowired
@@ -21,6 +27,12 @@ public class PrestamoController {
 
     @Autowired
     private CartService cartService;  
+
+    @Autowired
+    private TicketService ticketService; 
+
+    @Autowired
+    private PrestamoRepository prestamoRepository;
 
     @GetMapping("/historial")
     @Transactional(readOnly = true)  
@@ -55,6 +67,8 @@ public class PrestamoController {
 
             Prestamo prestamo = prestamoService.addPrestamo(cart);
 
+            ticketService.generateTicket(prestamo);
+
             cartService.clearCart(userId);
 
             return ResponseEntity.ok(prestamo);
@@ -81,5 +95,21 @@ public class PrestamoController {
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/{id}/ticket")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Ticket> getTicket(@PathVariable UUID id, UsuarioEnt userDetails) {
+        Optional<Prestamo> prestamoOpt = prestamoRepository.findById(id);
+        if (prestamoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Prestamo prestamo = prestamoOpt.get();
+        // Verificar permisos: propietario o admin
+        if (!prestamo.getUsuario().getId().equals(userDetails.getId()) && userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {
+            return ResponseEntity.status(403).build();
+        }
+        Optional<Ticket> ticket = prestamoService.findTicketByPrestamoId(id);
+        return ticket.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 }

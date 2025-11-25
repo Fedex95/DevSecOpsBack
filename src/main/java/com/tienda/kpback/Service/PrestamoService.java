@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class PrestamoService {  
@@ -88,5 +89,14 @@ public class PrestamoService {
         } else {
             throw new RuntimeException("Acceso denegado");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Ticket> findTicketByPrestamoId(UUID id) {
+        return prestamoRepository.findById(id).map(Prestamo::getTicket);
+    }
+
+    public List<Prestamo> getHistorialUsuario(UUID userId) {
+        return prestamoRepository.findByUsuarioId(userId); 
     }
 }
