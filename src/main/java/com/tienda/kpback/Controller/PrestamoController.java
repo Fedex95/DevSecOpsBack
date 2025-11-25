@@ -1,0 +1,62 @@
+package com.tienda.kpback.Controller;
+
+import com.tienda.kpback.Entity.Prestamo;
+import com.tienda.kpback.Service.PrestamoService;
+import com.tienda.kpback.Service.CartService;  
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
+import com.tienda.kpback.Entity.UsuarioEnt;
+
+@RestController
+@RequestMapping("/api/prestamos")
+
+public class PrestamoController {
+    @Autowired
+    private PrestamoService prestamoService;
+
+    @Autowired
+    private CartService cartService;  
+
+    @PostMapping  
+    public ResponseEntity<?> createPrestamo( UsuarioEnt userDetails) {
+        UUID userId = userDetails.getId();
+        try {
+            var cart = cartService.getCartByUsuarioId(userId);
+            if (cart.getItems().isEmpty()) {
+                return ResponseEntity.badRequest().body("El carrito está vacío");  
+            }
+
+            Prestamo prestamo = prestamoService.addPrestamo(cart);
+
+            cartService.clearCart(userId);
+
+            return ResponseEntity.ok(prestamo);
+        } catch (RuntimeException e) {
+            
+            return ResponseEntity.badRequest().body(e.getMessage());  // 400 con mensaje
+        } catch (Exception e) {
+            // Otros errores
+            return ResponseEntity.status(500).body("Error interno del servidor");  // 500 genérico
+        }
+    }
+
+    @PutMapping("/{id}/estado") 
+    @Transactional  
+    public ResponseEntity<?> updateEstado(@PathVariable UUID id, @RequestBody Map<String, Object> request,  UsuarioEnt userDetails) {
+        if (userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {  
+            return ResponseEntity.status(403).build();
+        }
+        try {
+            String estadoStr = (String) request.get("estado");
+            Prestamo.Estado estado = Prestamo.Estado.valueOf(estadoStr);  
+            prestamoService.updateEstado(id, estado);
+            return ResponseEntity.noContent().build();  // 204: evita serializar entidad con proxies
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+}
