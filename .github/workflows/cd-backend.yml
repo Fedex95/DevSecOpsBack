@@ -115,6 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: run-dast
     if: needs.run-dast.result == 'success'
+    environment: production-approval
     env:
       SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
