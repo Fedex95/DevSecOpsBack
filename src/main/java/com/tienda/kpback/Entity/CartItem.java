@@ -21,6 +21,10 @@ public class CartItem {
     @JsonBackReference
     private Cart cart;
 
+    @ManyToOne
+    @JoinColumn(name = "libro_id", referencedColumnName = "id") 
+    private Libro libro;
+
     @Column(nullable = false)
     private int cantidad = 1;
 }
