@@ -6,6 +6,7 @@ import com.tienda.kpback.Service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +22,30 @@ public class PrestamoController {
     @Autowired
     private CartService cartService;  
 
+    @GetMapping("/historial")
+    @Transactional(readOnly = true)  
+    public ResponseEntity<List<Prestamo>> getHistorialUsuario(UsuarioEnt userDetails) {
+        if (userDetails.getRol() != UsuarioEnt.Rol.USER && userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {  
+            return ResponseEntity.status(403).build();
+        }
+        UUID userId = userDetails.getId();
+        List<Prestamo> prestamos = prestamoService.findByUsuarioId(userId); 
+        return ResponseEntity.ok(prestamos);
+    }
+
+    @GetMapping("/all")
+    @Transactional(readOnly = true)  
+    public ResponseEntity<List<Prestamo>> getAllPrestamos(UsuarioEnt userDetails) {
+        if (userDetails.getRol() == UsuarioEnt.Rol.ADMIN) {  
+            List<Prestamo> prestamos = prestamoService.findAll();
+            return ResponseEntity.ok(prestamos);
+        } else {
+            return ResponseEntity.status(403).build();
+        }
+    }
+
     @PostMapping  
-    public ResponseEntity<?> createPrestamo( UsuarioEnt userDetails) {
+    public ResponseEntity<?> createPrestamo(UsuarioEnt userDetails) {
         UUID userId = userDetails.getId();
         try {
             var cart = cartService.getCartByUsuarioId(userId);
@@ -46,7 +69,7 @@ public class PrestamoController {
 
     @PutMapping("/{id}/estado") 
     @Transactional  
-    public ResponseEntity<?> updateEstado(@PathVariable UUID id, @RequestBody Map<String, Object> request,  UsuarioEnt userDetails) {
+    public ResponseEntity<?> updateEstado(@PathVariable UUID id, @RequestBody Map<String, Object> request, UsuarioEnt userDetails) {
         if (userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {  
             return ResponseEntity.status(403).build();
         }

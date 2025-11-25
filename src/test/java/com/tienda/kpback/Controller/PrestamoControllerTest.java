@@ -16,6 +16,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.http.ResponseEntity;
 import com.tienda.kpback.Entity.UsuarioEnt;
 import java.util.Arrays;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import java.util.UUID;
 import java.util.Map;
@@ -58,6 +59,25 @@ public class PrestamoControllerTest {
         mockCart = mock(Cart.class);
         when(mockPrestamo.getUsuario()).thenReturn(mockUsuario);
         when(mockUsuario.getId()).thenReturn(mockUserId);
+    }
+
+
+    @Test
+    void testGetAllPrestamos_Success() {
+        when(userDetails.getRol()).thenReturn(UsuarioEnt.Rol.ADMIN);
+        List<Prestamo> mockList = Arrays.asList(mockPrestamo);
+        when(prestamoService.findAll()).thenReturn(mockList);
+
+        ResponseEntity<List<Prestamo>> response = prestamoController.getAllPrestamos(userDetails);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(mockList, response.getBody());
+    }
+
+    @Test
+    void testGetAllPrestamos_Error() {
+        when(userDetails.getRol()).thenReturn(UsuarioEnt.Rol.USER);
+        ResponseEntity<List<Prestamo>> response = prestamoController.getAllPrestamos(userDetails);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 
     @Test
