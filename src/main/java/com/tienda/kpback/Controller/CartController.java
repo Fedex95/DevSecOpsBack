@@ -17,15 +17,15 @@ public class CartController {
     private CartService cartService;
 
     @GetMapping("/get")
-    public ResponseEntity<Cart> getCart(UsuarioEnt usuarioEnt) {
-        UUID userId = usuarioEnt.getId();
+    public ResponseEntity<Cart> getCart(UsuarioEnt userDetails) {
+        UUID userId = userDetails.getId();
         Cart cart = cartService.getCartByUsuarioId(userId);
         return new ResponseEntity<>(cart, HttpStatus.OK);
     }
 
     @PostMapping("/agregar")
-    public ResponseEntity<Cart> addItemToCart(UsuarioEnt usuarioEnt, @RequestBody Map<String, Object> request) {
-        UUID userId = usuarioEnt.getId();
+    public ResponseEntity<Cart> addItemToCart(UsuarioEnt userDetails, @RequestBody Map<String, Object> request) {
+        UUID userId = userDetails.getId();
         UUID libroId = UUID.fromString((String) request.get("libroId"));  
         int cantidad = (int) request.get("cantidad");
         Cart updatedCart = cartService.addItemToCart(userId, libroId, cantidad);
@@ -33,15 +33,15 @@ public class CartController {
     }
 
     @PostMapping("/actualizar/{cartItemId}")
-    public ResponseEntity<Cart> updateItemCantidad(UsuarioEnt usuarioEnt, @PathVariable UUID cartItemId, @RequestBody int cantidad) {
-        UUID userId = usuarioEnt.getId();
+    public ResponseEntity<Cart> updateItemCantidad(UsuarioEnt userDetails, @PathVariable UUID cartItemId, @RequestBody int cantidad) {
+        UUID userId = userDetails.getId();
         Cart cart = cartService.updateItemCart(cartItemId, cantidad, userId);
         return new ResponseEntity<>(cart, HttpStatus.OK);
     }
 
     @DeleteMapping("/eliminar/{itemId}")
-    public ResponseEntity<Void> deleteItemCart(UsuarioEnt usuarioEnt, @PathVariable UUID itemId) {
-        UUID userId = usuarioEnt.getId();
+    public ResponseEntity<Void> deleteItemCart(UsuarioEnt userDetails, @PathVariable UUID itemId) {
+        UUID userId = userDetails.getId();
         cartService.deleteItemCart(userId, itemId);
         return ResponseEntity.noContent().build();
     }
