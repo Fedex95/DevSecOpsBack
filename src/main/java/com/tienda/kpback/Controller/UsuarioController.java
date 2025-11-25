@@ -14,7 +14,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/usuario")
 public class UsuarioController {
-    private static final String INVALID_CREDENTIALS = "Invalid credentials"; 
+    private static final String INVALID_CREDENTIALS = "Invalid credentials";
 
     @Autowired
     private UsuarioService usuarioService;
@@ -32,9 +32,20 @@ public class UsuarioController {
     }
 
     @PostMapping("/createUsuario")
-    public ResponseEntity<UsuarioEnt> createUsuario(@RequestBody UsuarioEnt usuario){
-        UsuarioEnt newUsuario = usuarioService.saveUsuario(usuario);
-        return new ResponseEntity<>(newUsuario, HttpStatus.CREATED);
+    public ResponseEntity<String> createUsuario(@RequestParam String nombre, @RequestParam String apellido, @RequestParam String email, @RequestParam String pass) {
+        try {
+            UsuarioEnt usuario = new UsuarioEnt(); 
+            usuario.setNombre(nombre);
+            usuario.setApellido(apellido);
+            usuario.setEmail(email);
+            usuario.setPass(pass);
+            usuarioService.saveUsuario(usuario);
+            return ResponseEntity.ok("Usuario created");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid input");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error creating user");
+        }
     }
 
     @PutMapping("/editUsuario/{id}")

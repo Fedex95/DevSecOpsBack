@@ -60,8 +60,30 @@ public class UsuarioService {
         return Optional.empty();
     }
 
+    public void validateUserInput(String nombre, String apellido, String email, String pass) {
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || pass.length() < 8 || nombre.length() < 2 || apellido.length() < 2) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+
+        if (!nombre.matches("^[a-zA-Z\\s]{2,}$") || !apellido.matches("^[a-zA-Z\\s]{2,}$")) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+
+        String[] forbiddenWords = {"case", "randomblob", "when", "then", "else", "union", "select", "insert", "update", "delete", "drop", "exec", "script", "<", ">", "script", "eval", "function", "blob", "random"};
+        for (String param : new String[]{nombre, apellido, email, pass}) {
+            for (String word : forbiddenWords) {
+                if (param.toLowerCase().contains(word)) {
+                    throw new IllegalArgumentException("Invalid input");
+                }
+            }
+        }
+    }
+
     public UsuarioEnt saveUsuario(UsuarioEnt usuario){
         try{
+            // Valida antes de guardar
+            validateUserInput(usuario.getNombre(), usuario.getApellido(), usuario.getEmail(), usuario.getPass());
+
             String pass = usuario.getPass();
             if (pass == null || pass.isBlank()) {
                 throw new RuntimeException("Password vacío");
