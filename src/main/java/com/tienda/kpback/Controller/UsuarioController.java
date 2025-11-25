@@ -6,14 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/usuario")
 public class UsuarioController {
+    private static final String INVALID_CREDENTIALS = "Invalid credentials";
+    private static final String PASS_REGEX = "^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?~`]{8,}$";
+    private static final String[] FORBIDDEN = {"case","randomblob","when","then","else","union","select","insert","update","delete","drop","exec","script","<",">","eval","function","blob","random"};
+
     @Autowired
     private UsuarioService usuarioService;
 
@@ -30,9 +33,20 @@ public class UsuarioController {
     }
 
     @PostMapping("/createUsuario")
-    public ResponseEntity<UsuarioEnt> createUsuario(@RequestBody UsuarioEnt usuario){
-        UsuarioEnt newUsuario = usuarioService.saveUsuario(usuario);
-        return new ResponseEntity<>(newUsuario, HttpStatus.CREATED);
+    public ResponseEntity<String> createUsuario(@RequestParam String nombre, @RequestParam String apellido, @RequestParam String email, @RequestParam String pass) {
+        try {
+            UsuarioEnt usuario = new UsuarioEnt(); 
+            usuario.setNombre(nombre);
+            usuario.setApellido(apellido);
+            usuario.setEmail(email);
+            usuario.setPass(pass);
+            usuarioService.saveUsuario(usuario);
+            return ResponseEntity.ok("Usuario created");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid input");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error creating user");
+        }
     }
 
     @PutMapping("/editUsuario/{id}")
@@ -55,19 +69,23 @@ public class UsuarioController {
         }
     }
 
-    @PostMapping("/viewPass")
+    @GetMapping("/viewPass")
     public ResponseEntity<String> viewPass(@RequestParam String email, @RequestParam String pass){
-        Optional<UsuarioEnt> usuarioP = usuarioService.getUsuarioByEmail(email);  
-        if(usuarioP.isPresent()){
-            UsuarioEnt usuarioExist = usuarioP.get();
-            boolean correctPass = usuarioService.checkPass(pass, usuarioExist.getPass());
-            if (correctPass){
-                return new ResponseEntity<>("Correct Password", HttpStatus.OK);
-            }else {
-                return new ResponseEntity<>("Wrong Password", HttpStatus.UNAUTHORIZED);
-            }
-        }else{
-            return new ResponseEntity<>("Usuario no existente", HttpStatus.NOT_FOUND);
+        if (email == null || email.isBlank() || pass == null || pass.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS);
+        }
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || !pass.matches(PASS_REGEX)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS);
+        }
+        String pl = pass.toLowerCase();
+        for (String w : FORBIDDEN) {
+            if (pl.contains(w)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS);
+        }
+        Optional<UsuarioEnt> usuarioP = usuarioService.getUsuarioByEmailAndPass(email, pass); 
+        if (usuarioP.isPresent()) {
+            return new ResponseEntity<>("Correct Password", HttpStatus.OK); 
+        } else {
+            return new ResponseEntity<>(INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED);
         }
     }
 

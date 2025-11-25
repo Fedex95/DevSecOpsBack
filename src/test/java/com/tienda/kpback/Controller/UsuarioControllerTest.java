@@ -2,7 +2,7 @@ package com.tienda.kpback.Controller;
 
 import com.tienda.kpback.Entity.UsuarioEnt;
 import com.tienda.kpback.Service.UsuarioService;
-import org.junit.jupiter.api.BeforeEach;  
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,10 +15,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID; 
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;  
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -37,11 +37,11 @@ class UsuarioControllerTest {
     @Mock
     private UsuarioEnt mockUsuario;
 
-    private UUID mockUserId;  
+    private UUID mockUserId;
 
     @BeforeEach
     void setUp() {
-        mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");  
+        mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     }
 
     @Test
@@ -57,112 +57,144 @@ class UsuarioControllerTest {
     @Test
     void testGetUsuarioById_Found() {
         Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
-        when(usuarioService.getUsuarioById(any(UUID.class))).thenReturn(mockOptional); 
+        when(usuarioService.getUsuarioById(any(UUID.class))).thenReturn(mockOptional);
 
-        ResponseEntity<UsuarioEnt> response = usuarioController.getUsuarioById(mockUserId);  
+        ResponseEntity<UsuarioEnt> response = usuarioController.getUsuarioById(mockUserId);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(mockUsuario, response.getBody());
     }
 
     @Test
     void testGetUsuarioById_NotFound() {
-        when(usuarioService.getUsuarioById(any(UUID.class))).thenReturn(Optional.empty()); 
+        when(usuarioService.getUsuarioById(any(UUID.class))).thenReturn(Optional.empty());
 
-        ResponseEntity<UsuarioEnt> response = usuarioController.getUsuarioById(mockUserId);  
+        ResponseEntity<UsuarioEnt> response = usuarioController.getUsuarioById(mockUserId);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
-    void testCreateUsuario() {
+    void testCreateUsuario_Success_Params() {
+        // saveUsuario returns entity on success
         when(usuarioService.saveUsuario(any(UsuarioEnt.class))).thenReturn(mockUsuario);
 
-        ResponseEntity<UsuarioEnt> response = usuarioController.createUsuario(mockUsuario);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(mockUsuario, response.getBody());
+        ResponseEntity<String> response = usuarioController.createUsuario("John", "Doe", "email@example.com", "password123");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Usuario created", response.getBody());
+    }
+
+    @Test
+    void testCreateUsuario_InvalidInput() {
+        when(usuarioService.saveUsuario(any(UsuarioEnt.class))).thenThrow(new IllegalArgumentException("Invalid input"));
+
+        ResponseEntity<String> response = usuarioController.createUsuario("John", "Doe", "invalid-email", "pass");
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid input", response.getBody());
+    }
+
+    @Test
+    void testCreateUsuario_Error() {
+        when(usuarioService.saveUsuario(any(UsuarioEnt.class))).thenThrow(new RuntimeException("Error"));
+
+        ResponseEntity<String> response = usuarioController.createUsuario("John", "Doe", "email@example.com", "password123");
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Error creating user", response.getBody());
     }
 
     @Test
     void testEditUsuario_Success() {
-        when(usuarioService.updateUsuario(any(UUID.class), any(UsuarioEnt.class))).thenReturn(mockUsuario); 
-        ResponseEntity<UsuarioEnt> response = usuarioController.editUsuario(mockUserId, mockUsuario); 
+        when(usuarioService.updateUsuario(any(UUID.class), any(UsuarioEnt.class))).thenReturn(mockUsuario);
+        ResponseEntity<UsuarioEnt> response = usuarioController.editUsuario(mockUserId, mockUsuario);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(mockUsuario, response.getBody());
     }
 
     @Test
     void testEditUsuario_NotFound() {
-        when(usuarioService.updateUsuario(any(UUID.class), any(UsuarioEnt.class))).thenThrow(new RuntimeException("Not found")); 
+        when(usuarioService.updateUsuario(any(UUID.class), any(UsuarioEnt.class))).thenThrow(new RuntimeException("Not found"));
 
-        ResponseEntity<UsuarioEnt> response = usuarioController.editUsuario(mockUserId, mockUsuario);  
+        ResponseEntity<UsuarioEnt> response = usuarioController.editUsuario(mockUserId, mockUsuario);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
     void testDeleteUsuario_Success() {
-        doNothing().when(usuarioService).deleteUsuario(any(UUID.class)); 
+        doNothing().when(usuarioService).deleteUsuario(any(UUID.class));
 
-        ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(mockUserId);  
+        ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(mockUserId);
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
     }
 
     @Test
     void testDeleteUsuario_NotFound() {
-        doThrow(new RuntimeException("Not found")).when(usuarioService).deleteUsuario(any(UUID.class)); 
+        doThrow(new RuntimeException("Not found")).when(usuarioService).deleteUsuario(any(UUID.class));
 
-        ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(mockUserId);  
+        ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(mockUserId);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
     void testViewPass_Correct() throws NoSuchAlgorithmException {
         Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(mockOptional);  
-        when(mockUsuario.getPass()).thenReturn("hashed");
-        doReturn(true).when(usuarioService).checkPass(anyString(), anyString());
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenReturn(mockOptional);
 
-        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "pass"); 
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Correct Password", response.getBody());
     }
 
     @Test
     void testViewPass_Wrong() throws NoSuchAlgorithmException {
-        Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(mockOptional); 
-        when(mockUsuario.getPass()).thenReturn("hashed");
-        doReturn(false).when(usuarioService).checkPass(anyString(), anyString());
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenReturn(Optional.empty());
 
-        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "pass");  
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Wrong Password", response.getBody());
+        assertEquals("Invalid credentials", response.getBody());
     }
 
     @Test
     void testViewPass_UserNotFound() {
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(Optional.empty());  
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenReturn(Optional.empty());
 
-        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "pass");  
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Usuario no existente", response.getBody());
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("Invalid credentials", response.getBody());
+    }
+
+    @Test
+    void testViewPass_InvalidEmail() {
+        ResponseEntity<String> response = usuarioController.viewPass("invalid-email", "password123");
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("Invalid credentials", response.getBody());
+    }
+
+    @Test
+    void testViewPass_InvalidPass() {
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "short");
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("Invalid credentials", response.getBody());
+    }
+
+    @Test
+    void testViewPass_SQLInjection_DenyList() {
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "case randomblob(100000) when not null then 1 else 1 end");
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("Invalid credentials", response.getBody());
     }
 
     @Test
     void testViewPass_Error() {
-        Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(mockOptional);
-        when(mockUsuario.getPass()).thenReturn("hashed");
-        doThrow(new RuntimeException("Error")).when(usuarioService).checkPass(anyString(), anyString());
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenThrow(new RuntimeException("Error"));
 
         assertThrows(RuntimeException.class, () -> {
-            usuarioController.viewPass("email@example.com", "pass");
+            usuarioController.viewPass("email@example.com", "password123");
         });
     }
 
     @Test
     void testAdmin() {
-        when(usuarioService.Admin(any(UUID.class))).thenReturn(true);  
+        when(usuarioService.Admin(any(UUID.class))).thenReturn(true);
 
-        ResponseEntity<Boolean> response = usuarioController.Admin(mockUserId); 
+        ResponseEntity<Boolean> response = usuarioController.Admin(mockUserId);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(true, response.getBody());
     }

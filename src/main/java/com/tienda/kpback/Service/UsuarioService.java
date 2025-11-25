@@ -8,10 +8,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;  
+import java.util.UUID;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender; 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;  
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Service
 public class UsuarioService {
@@ -26,7 +26,7 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private JavaMailSender mailSender;  
+    private JavaMailSender mailSender;
 
     public List<UsuarioEnt> getAllUsuarios(){
         return usuarioRepository.findAll();
@@ -38,16 +38,52 @@ public class UsuarioService {
     }
 
     @Transactional
-    public Optional<UsuarioEnt> getUsuarioByUsuario(String usuario){
-        return usuarioRepository.findByUsuario(usuario);
+    public Optional<UsuarioEnt> getUsuarioByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        return usuarioRepository.findByEmail(email);
     }
 
-    public Optional<UsuarioEnt> getUsuarioByEmail(String email) {
-        return usuarioRepository.findByEmail(email);
+    @Transactional
+    public Optional<UsuarioEnt> getUsuarioByEmailAndPass(String email, String pass) {
+        if (email == null || email.isBlank() || pass == null || pass.isBlank()) {
+            return Optional.empty();
+        }
+        Optional<UsuarioEnt> usuarioOpt = usuarioRepository.findByEmail(email);
+        if (usuarioOpt.isPresent()) {
+            UsuarioEnt usuario = usuarioOpt.get();
+            if (passwordEncoder.matches(pass, usuario.getPass())) {
+                return usuarioOpt;
+            }
+        }
+        return Optional.empty();
+    }
+
+    public void validateUserInput(String nombre, String apellido, String email, String pass) {
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || pass.length() < 8 || nombre.length() < 2 || apellido.length() < 2) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+
+        if (!nombre.matches("^[a-zA-Z\\s]{2,}$") || !apellido.matches("^[a-zA-Z\\s]{2,}$")) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+
+        String[] forbiddenWords = {"case", "randomblob", "when", "then", "else", "union", "select", "insert", "update", "delete", "drop", "exec", "script", "<", ">", "script", "eval", "function", "blob", "random"};
+        for (String param : new String[]{nombre, apellido, email, pass}) {
+            for (String word : forbiddenWords) {
+                if (param.toLowerCase().contains(word)) {
+                    throw new IllegalArgumentException("Invalid input");
+                }
+            }
+        }
     }
 
     public UsuarioEnt saveUsuario(UsuarioEnt usuario){
         try{
+            // Valida antes de guardar
+            validateUserInput(usuario.getNombre(), usuario.getApellido(), usuario.getEmail(), usuario.getPass());
+
             String pass = usuario.getPass();
             if (pass == null || pass.isBlank()) {
                 throw new RuntimeException("Password vacío");
