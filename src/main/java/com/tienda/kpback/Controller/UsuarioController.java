@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;  
 import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
@@ -15,6 +14,8 @@ import java.util.Optional;
 @RequestMapping("/api/usuario")
 public class UsuarioController {
     private static final String INVALID_CREDENTIALS = "Invalid credentials";
+    private static final String PASS_REGEX = "^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?~`]{8,}$";
+    private static final String[] FORBIDDEN = {"case","randomblob","when","then","else","union","select","insert","update","delete","drop","exec","script","<",">","eval","function","blob","random"};
 
     @Autowired
     private UsuarioService usuarioService;
@@ -69,18 +70,17 @@ public class UsuarioController {
     }
 
     @GetMapping("/viewPass")
-    public ResponseEntity<String> viewPass(@RequestParam @Valid String email, @RequestParam @Valid String pass){
-        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || !pass.matches("^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?~`]{8,}$")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS); 
+    public ResponseEntity<String> viewPass(@RequestParam String email, @RequestParam String pass){
+        if (email == null || email.isBlank() || pass == null || pass.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS);
         }
-
-        String[] forbiddenWords = {"case", "randomblob", "when", "then", "else", "union", "select", "insert", "update", "delete", "drop", "exec", "script", "<", ">", "script", "eval", "function", "blob", "random"};
-        for (String word : forbiddenWords) {
-            if (pass.toLowerCase().contains(word)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS);  
-            }
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || !pass.matches(PASS_REGEX)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS);
         }
-
+        String pl = pass.toLowerCase();
+        for (String w : FORBIDDEN) {
+            if (pl.contains(w)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_CREDENTIALS);
+        }
         Optional<UsuarioEnt> usuarioP = usuarioService.getUsuarioByEmailAndPass(email, pass); 
         if (usuarioP.isPresent()) {
             return new ResponseEntity<>("Correct Password", HttpStatus.OK); 
