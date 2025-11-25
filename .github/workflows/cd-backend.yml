@@ -153,7 +153,7 @@ jobs:
           ssh-keyscan -p 22 -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
       - name: Remove staging container
         run: |
-          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
             echo "Removing staging container if exists..."
             docker stop ${CONTAINER_NAME_STAGING} || echo "No staging container running"
