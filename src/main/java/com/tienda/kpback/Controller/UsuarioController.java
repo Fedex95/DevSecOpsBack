@@ -58,15 +58,15 @@ public class UsuarioController {
     @GetMapping("/viewPass")
     public ResponseEntity<String> viewPass(@RequestParam @Valid String email, @RequestParam @Valid String pass){
         // Validación básica
-        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || pass.length() < 8) {
-            return ResponseEntity.badRequest().body("Entrada inválida");
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || !pass.matches("^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?~`]{8,}$")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
 
-        // Lista de palabras prohibidas
-        String[] forbiddenWords = {"case", "randomblob", "when", "then", "else", "union", "select", "insert", "update", "delete", "drop", "exec", "script", "<", ">"};
+        // Deny list expandida
+        String[] forbiddenWords = {"case", "randomblob", "when", "then", "else", "union", "select", "insert", "update", "delete", "drop", "exec", "script", "<", ">", "script", "eval", "function", "blob", "random"};
         for (String word : forbiddenWords) {
             if (pass.toLowerCase().contains(word)) {
-                return ResponseEntity.badRequest().body("Entrada inválida");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
             }
         }
 
@@ -74,7 +74,7 @@ public class UsuarioController {
         if (usuarioP.isPresent()) {
             return new ResponseEntity<>("Correct Password", HttpStatus.OK); 
         } else {
-            return new ResponseEntity<>("Wrong Password or User not found", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("Invalid credentials", HttpStatus.UNAUTHORIZED);
         }
     }
 
