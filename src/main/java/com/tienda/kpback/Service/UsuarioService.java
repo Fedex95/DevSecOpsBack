@@ -2,7 +2,7 @@ package com.tienda.kpback.Service;
 
 import com.tienda.kpback.Entity.UsuarioEnt;
 import com.tienda.kpback.Repository.UsuarioRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
