@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 import com.tienda.kpback.Entity.UsuarioEnt;
@@ -19,7 +18,6 @@ import com.tienda.kpback.Repository.PrestamoRepository;
 
 @RestController
 @RequestMapping("/api/prestamos")
-@SecurityRequirement(name = "bearerAuth")
 
 public class PrestamoController {
     @Autowired
