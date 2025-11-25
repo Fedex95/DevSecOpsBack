@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;  
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/usuario")
@@ -55,18 +55,22 @@ public class UsuarioController {
         }
     }
 
-    @PostMapping("/viewPass")
-    public ResponseEntity<String> viewPass(@RequestParam String email, @RequestParam String pass){
-        Optional<UsuarioEnt> usuarioP = usuarioService.getUsuarioByEmail(email);  
-        if(usuarioP.isPresent()){
+    @GetMapping("/viewPass")
+    public ResponseEntity<String> viewPass(@RequestParam @Valid String email, @RequestParam @Valid String pass){
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || pass.length() < 8) {
+            return ResponseEntity.badRequest().body("Entrada inválida");
+        }
+
+        Optional<UsuarioEnt> usuarioP = usuarioService.getUsuarioByEmail(email);
+        if (usuarioP.isPresent()) {
             UsuarioEnt usuarioExist = usuarioP.get();
             boolean correctPass = usuarioService.checkPass(pass, usuarioExist.getPass());
-            if (correctPass){
-                return new ResponseEntity<>("Correct Password", HttpStatus.OK);
-            }else {
+            if (correctPass) {
+                return new ResponseEntity<>("Correct Password", HttpStatus.OK); 
+            } else {
                 return new ResponseEntity<>("Wrong Password", HttpStatus.UNAUTHORIZED);
             }
-        }else{
+        } else {
             return new ResponseEntity<>("Usuario no existente", HttpStatus.NOT_FOUND);
         }
     }

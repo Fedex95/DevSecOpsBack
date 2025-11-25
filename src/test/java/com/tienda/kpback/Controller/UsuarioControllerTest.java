@@ -120,7 +120,7 @@ class UsuarioControllerTest {
         when(mockUsuario.getPass()).thenReturn("hashed");
         doReturn(true).when(usuarioService).checkPass(anyString(), anyString());
 
-        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "pass"); 
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Correct Password", response.getBody());
     }
@@ -132,7 +132,7 @@ class UsuarioControllerTest {
         when(mockUsuario.getPass()).thenReturn("hashed");
         doReturn(false).when(usuarioService).checkPass(anyString(), anyString());
 
-        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "pass");  
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Wrong Password", response.getBody());
     }
@@ -141,9 +141,23 @@ class UsuarioControllerTest {
     void testViewPass_UserNotFound() {
         when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(Optional.empty());  
 
-        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "pass");  
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  // Pass >= 8 chars
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals("Usuario no existente", response.getBody());
+    }
+
+    @Test
+    void testViewPass_InvalidEmail() {
+        ResponseEntity<String> response = usuarioController.viewPass("invalid-email", "password123"); 
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Entrada inválida", response.getBody());
+    }
+
+    @Test
+    void testViewPass_InvalidPass() {
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "short");  
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Entrada inválida", response.getBody());
     }
 
     @Test
@@ -154,7 +168,7 @@ class UsuarioControllerTest {
         doThrow(new RuntimeException("Error")).when(usuarioService).checkPass(anyString(), anyString());
 
         assertThrows(RuntimeException.class, () -> {
-            usuarioController.viewPass("email@example.com", "pass");
+            usuarioController.viewPass("email@example.com", "password123");
         });
     }
 
