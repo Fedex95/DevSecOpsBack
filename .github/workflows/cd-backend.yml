@@ -142,6 +142,15 @@ jobs:
       HOST_PORT_PROD: ${{ secrets.HOST_PORT_PROD }}               
       IP_FRONT: ${{ secrets.IP_FRONT }}
     steps:
+      - name: Setup SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          known_hosts: unnecessary
+      - name: Add EC2 to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 22 -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
       - name: Remove staging container
         run: |
           ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
