@@ -38,10 +38,10 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
       MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-      CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_STAGING }}
+      CONTAINER_NAME_STAGING: ${{ secrets.CONTAINER_NAME_STAGING }}
       NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
-      CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_STAGING }}
-      HOST_PORT: ${{ secrets.HOST_PORT_STAGING }}
+      CONTAINER_PORT_STAGING: ${{ secrets.CONTAINER_PORT_STAGING }}
+      HOST_PORT_STAGING: ${{ secrets.HOST_PORT_STAGING }}
       IP_FRONT: ${{ secrets.IP_FRONT }}
 
     steps:
@@ -63,14 +63,14 @@ jobs:
             echo "Pulling image from Docker Hub..."
             docker pull ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }}
             echo "Stopping old container if exists..."
-            docker stop ${CONTAINER_NAME} || echo "No container running"
-            docker rm ${CONTAINER_NAME} || echo "No container to remove"
+            docker stop ${CONTAINER_NAME_STAGING} || echo "No container running"
+            docker rm ${CONTAINER_NAME_STAGING} || echo "No container to remove"
             echo "Running new container..."
-            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" -e MAIL_USERNAME="${MAIL_USERNAME}" -e MAIL_PASSWORD="${MAIL_PASSWORD}" -e IP_FRONT="${IP_FRONT}" ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }} 
+            docker run -d --name ${CONTAINER_NAME_STAGING} --network ${NETWORK_NAME} -p ${CONTAINER_PORT_STAGING}:${HOST_PORT_STAGING} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" -e MAIL_USERNAME="${MAIL_USERNAME}" -e MAIL_PASSWORD="${MAIL_PASSWORD}" -e IP_FRONT="${IP_FRONT}" ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }} 
             echo "Verifying container..."
             docker ps
             echo "Last logs:"
-            docker logs ${CONTAINER_NAME} | tail -20
+            docker logs ${CONTAINER_NAME_STAGING} | tail -20
             echo "Deployment completed successfully"
           EOF
 
@@ -110,54 +110,56 @@ jobs:
             report.html
             report.json
 
+  await-approval:
+    name: Await DAST approval
+    runs-on: ubuntu-latest
+    needs: run-dast
+    environment: production-approval        
+    steps:
+      - name: Download DAST report
+        uses: actions/download-artifact@v4
+        with:
+          name: dast-report
+      - name: Notify reviewers (optional)
+        run: echo "Review DAST report and approve environment to proceed"
+
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: run-dast
-    if: needs.run-dast.result == 'success'
-    environment: production-approval
+    needs: await-approval
     env:
       SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}  
-      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }} 
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
       CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_PROD }}
+      CONTAINER_NAME_STAGING: ${{ secrets.CONTAINER_NAME_STAGING }}    
       NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
-      CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_PROD }}
-      HOST_PORT: ${{ secrets.HOST_PORT_PROD }}
+      CONTAINER_PORT_PROD: ${{ secrets.CONTAINER_PORT_PROD }}     
+      HOST_PORT: ${{ secrets.HOST_PORT_PROD }}               
       IP_FRONT: ${{ secrets.IP_FRONT }}
-
     steps:
-      - name: Setup SSH
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.EC2_SSH_KEY }}
-          known_hosts: unnecessary
-
-      - name: Add EC2 prod to known_hosts
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: remove staging container
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p 22 -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
-
-      - name: Clean up Production
-        run: |
-          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
-            docker stop ${CONTAINER_NAME} || echo "No container running"
-            docker rm ${CONTAINER_NAME} || echo "No container to remove"
+          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            set -euo pipefail
+            docker stop ${{ secrets.CONTAINER_NAME_STAGING }} || echo "No staging container"
+            docker rm ${{ secrets.CONTAINER_NAME_STAGING }} || echo "No staging container to remove"
           EOF
-
-      - name: Deploy backend on EC2 (production)
+      - name: Deploy
         run: |
           ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
             echo "Pulling image from Docker Hub..."
             docker pull ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }} 
-            echo "Stopping old container if exists..."
-            docker stop ${CONTAINER_NAME} || echo "No container running"
-            docker rm ${CONTAINER_NAME} || echo "No container to remove"
-            echo "Running new container..."
+            echo "Stopping old production container if exists..."
+            docker stop ${CONTAINER_NAME} || echo "No production container running"
+            docker rm ${CONTAINER_NAME} || echo "No production container to remove"
+            echo "Running new production container..."
             docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" -e MAIL_USERNAME="${MAIL_USERNAME}" -e MAIL_PASSWORD="${MAIL_PASSWORD}" -e IP_FRONT="${IP_FRONT}" ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }}  
             echo "Verifying container..."
             docker ps
