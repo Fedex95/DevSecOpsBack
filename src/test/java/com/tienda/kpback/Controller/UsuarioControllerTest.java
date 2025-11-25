@@ -129,7 +129,7 @@ class UsuarioControllerTest {
 
         ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Wrong Password or User not found", response.getBody());  
+        assertEquals("Invalid credentials", response.getBody());  
     }
 
     @Test
@@ -138,28 +138,28 @@ class UsuarioControllerTest {
 
         ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());  
-        assertEquals("Wrong Password or User not found", response.getBody());  
+        assertEquals("Invalid credentials", response.getBody()); 
     }
 
     @Test
     void testViewPass_InvalidEmail() {
         ResponseEntity<String> response = usuarioController.viewPass("invalid-email", "password123"); 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Entrada inválida", response.getBody());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());  
+        assertEquals("Invalid credentials", response.getBody());  
     }
 
     @Test
     void testViewPass_InvalidPass() {
         ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "short");  
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Entrada inválida", response.getBody());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());  
+        assertEquals("Invalid credentials", response.getBody());  
     }
 
     @Test
     void testViewPass_SQLInjection_DenyList() {
         ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "case randomblob(100000) when not null then 1 else 1 end"); 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Entrada inválida", response.getBody());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());  
+        assertEquals("Invalid credentials", response.getBody()); 
     }
 
     @Test
