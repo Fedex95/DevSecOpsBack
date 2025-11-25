@@ -114,13 +114,14 @@ jobs:
     name: Await DAST approval
     runs-on: ubuntu-latest
     needs: run-dast
+    if: always()                       
     environment: production-approval        
     steps:
       - name: Download DAST report
         uses: actions/download-artifact@v4
         with:
           name: dast-report
-      - name: Notify reviewers (optional)
+      - name: Notify reviewers 
         run: echo "Review DAST report and approve environment to proceed"
 
   deploy-production:
@@ -138,21 +139,20 @@ jobs:
       CONTAINER_NAME_STAGING: ${{ secrets.CONTAINER_NAME_STAGING }}    
       NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
       CONTAINER_PORT_PROD: ${{ secrets.CONTAINER_PORT_PROD }}     
-      HOST_PORT: ${{ secrets.HOST_PORT_PROD }}               
+      HOST_PORT_PROD: ${{ secrets.HOST_PORT_PROD }}               
       IP_FRONT: ${{ secrets.IP_FRONT }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: remove staging container
+      - name: Remove staging container
         run: |
-          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
             set -euo pipefail
-            docker stop ${{ secrets.CONTAINER_NAME_STAGING }} || echo "No staging container"
-            docker rm ${{ secrets.CONTAINER_NAME_STAGING }} || echo "No staging container to remove"
+            echo "Removing staging container if exists..."
+            docker stop ${CONTAINER_NAME_STAGING} || echo "No staging container running"
+            docker rm ${CONTAINER_NAME_STAGING} || echo "No staging container to remove"
           EOF
       - name: Deploy
         run: |
-          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
+          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
             set -euo pipefail
             echo "Pulling image from Docker Hub..."
             docker pull ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }} 
@@ -160,7 +160,7 @@ jobs:
             docker stop ${CONTAINER_NAME} || echo "No production container running"
             docker rm ${CONTAINER_NAME} || echo "No production container to remove"
             echo "Running new production container..."
-            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" -e MAIL_USERNAME="${MAIL_USERNAME}" -e MAIL_PASSWORD="${MAIL_PASSWORD}" -e IP_FRONT="${IP_FRONT}" ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }}  
+            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT_PROD}:${HOST_PORT_PROD} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" -e MAIL_USERNAME="${MAIL_USERNAME}" -e MAIL_PASSWORD="${MAIL_PASSWORD}" -e IP_FRONT="${IP_FRONT}" ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }}
             echo "Verifying container..."
             docker ps
             echo "Last logs:"
