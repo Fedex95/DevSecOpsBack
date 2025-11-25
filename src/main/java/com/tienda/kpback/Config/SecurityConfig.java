@@ -41,7 +41,7 @@ public class SecurityConfig {
                     "/swagger-ui.html"
                 ).permitAll()
                 .requestMatchers("/api/auth/**").permitAll() 
-                .anyRequest().permitAll()  // Temporal for testing purposes only
+                .anyRequest().permitAll()  // Cambiado: permite todo sin auth
             );
 
         return http.build();

@@ -2,6 +2,7 @@ package com.tienda.kpback.Controller;
 
 import com.tienda.kpback.Entity.UsuarioEnt;
 import com.tienda.kpback.Service.UsuarioService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,16 +55,6 @@ public class UsuarioController {
         try{
             UsuarioEnt editUsuario = usuarioService.updateUsuario(id, usuario);
             return new ResponseEntity<>(editUsuario, HttpStatus.OK);
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @DeleteMapping("/deleteUsuario/{id}")
-    public ResponseEntity<UsuarioEnt> deleteUsuario(@PathVariable UUID id){ 
-        try{
-            usuarioService.deleteUsuario(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }catch (Exception e){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

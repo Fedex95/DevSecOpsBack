@@ -1,6 +1,7 @@
 package com.tienda.kpback.Controller;
 
 import com.tienda.kpback.Entity.Cart;
+import com.tienda.kpback.Entity.UsuarioEnt;
 import com.tienda.kpback.Service.CartService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import com.tienda.kpback.Entity.UsuarioEnt;
 
 import java.util.HashMap;
 import java.util.Map;

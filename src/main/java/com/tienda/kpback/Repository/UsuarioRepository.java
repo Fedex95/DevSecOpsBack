@@ -14,4 +14,6 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEnt, UUID> {
 
     @Query("SELECT u FROM UsuarioEnt u WHERE u.email = :email AND u.pass = :pass")
     Optional<UsuarioEnt> findByEmailAndPass(@Param("email") String email, @Param("pass") String pass);
+    @Query("SELECT u FROM UsuarioEnt u WHERE u.usuario = :usuario")
+    Optional<UsuarioEnt> findByUsuario(String usuario);
 }

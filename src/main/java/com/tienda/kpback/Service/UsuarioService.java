@@ -60,6 +60,14 @@ public class UsuarioService {
         return Optional.empty();
     }
 
+    @Transactional
+    public Optional<UsuarioEnt> getUsuarioByUsuario(String usuario) {
+        if (usuario == null || usuario.isBlank()) {
+            return Optional.empty();
+        }
+        return usuarioRepository.findByUsuario(usuario);
+    }
+
     public void validateUserInput(String nombre, String apellido, String email, String pass) {
         if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || pass.length() < 8 || nombre.length() < 2 || apellido.length() < 2) {
             throw new IllegalArgumentException("Invalid input");
