@@ -1,7 +1,6 @@
 package com.tienda.kpback.Controller;
 
 import com.tienda.kpback.Entity.Cart;
-import com.tienda.kpback.Entity.UsuarioEnt;
 import com.tienda.kpback.Service.CartService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.tienda.kpback.Config.CustomUserDetails;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +29,7 @@ class CartControllerTest {
     private CartController cartController;
 
     @Mock
-    private UsuarioEnt userDetails;
+    private CustomUserDetails userDetails;
 
     private UUID mockUserId; 
     private UUID mockLibroId; 
@@ -44,7 +44,7 @@ class CartControllerTest {
 
     @Test
     void testGetCart() {
-        when(userDetails.getId()).thenReturn(mockUserId);  
+        when(userDetails.getUserId()).thenReturn(mockUserId);  
         Cart mockCart = new Cart();
         when(cartService.getCartByUsuarioId(mockUserId)).thenReturn(mockCart);  
 
@@ -56,7 +56,7 @@ class CartControllerTest {
 
     @Test
     void testAddItemToCart() {
-        when(userDetails.getId()).thenReturn(mockUserId); 
+        when(userDetails.getUserId()).thenReturn(mockUserId); 
         Cart mockCart = new Cart();
         when(cartService.addItemToCart(mockUserId, mockLibroId, 3)).thenReturn(mockCart);  
 
@@ -72,7 +72,7 @@ class CartControllerTest {
 
     @Test
     void testUpdateItemCantidad() {
-        when(userDetails.getId()).thenReturn(mockUserId);  
+        when(userDetails.getUserId()).thenReturn(mockUserId);  
         Cart mockCart = new Cart();
         when(cartService.updateItemCart(mockCartItemId, 5, mockUserId)).thenReturn(mockCart); 
 
@@ -84,7 +84,7 @@ class CartControllerTest {
 
     @Test
     void testDeleteItemCart() {
-        when(userDetails.getId()).thenReturn(mockUserId); 
+        when(userDetails.getUserId()).thenReturn(mockUserId); 
         doNothing().when(cartService).deleteItemCart(mockUserId, mockCartItemId);  
 
         ResponseEntity<Void> response = cartController.deleteItemCart(userDetails, mockCartItemId); 

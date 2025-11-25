@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.tienda.kpback.Config.CustomUserDetails;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 import com.tienda.kpback.Entity.UsuarioEnt;
@@ -18,6 +21,7 @@ import com.tienda.kpback.Repository.PrestamoRepository;
 
 @RestController
 @RequestMapping("/api/prestamos")
+@SecurityRequirement(name = "bearerAuth")
 
 public class PrestamoController {
     @Autowired
@@ -34,18 +38,18 @@ public class PrestamoController {
 
     @GetMapping("/historial")
     @Transactional(readOnly = true)  
-    public ResponseEntity<List<Prestamo>> getHistorialUsuario(UsuarioEnt userDetails) {
+    public ResponseEntity<List<Prestamo>> getHistorialUsuario(@AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails.getRol() != UsuarioEnt.Rol.USER && userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {  
             return ResponseEntity.status(403).build();
         }
-        UUID userId = userDetails.getId();
+        UUID userId = userDetails.getUserId();
         List<Prestamo> prestamos = prestamoService.findByUsuarioId(userId); 
         return ResponseEntity.ok(prestamos);
     }
 
     @GetMapping("/all")
     @Transactional(readOnly = true)  
-    public ResponseEntity<List<Prestamo>> getAllPrestamos(UsuarioEnt userDetails) {
+    public ResponseEntity<List<Prestamo>> getAllPrestamos(@AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails.getRol() == UsuarioEnt.Rol.ADMIN) {  
             List<Prestamo> prestamos = prestamoService.findAll();
             return ResponseEntity.ok(prestamos);
@@ -55,8 +59,8 @@ public class PrestamoController {
     }
 
     @PostMapping  
-    public ResponseEntity<?> createPrestamo(UsuarioEnt userDetails) {
-        UUID userId = userDetails.getId();
+    public ResponseEntity<?> createPrestamo(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        UUID userId = userDetails.getUserId();
         try {
             var cart = cartService.getCartByUsuarioId(userId);
             if (cart.getItems().isEmpty()) {
@@ -81,7 +85,7 @@ public class PrestamoController {
 
     @PutMapping("/{id}/estado") 
     @Transactional  
-    public ResponseEntity<?> updateEstado(@PathVariable UUID id, @RequestBody Map<String, Object> request, UsuarioEnt userDetails) {
+    public ResponseEntity<?> updateEstado(@PathVariable UUID id, @RequestBody Map<String, Object> request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {  
             return ResponseEntity.status(403).build();
         }
@@ -97,14 +101,14 @@ public class PrestamoController {
 
     @GetMapping("/{id}/ticket")
     @Transactional(readOnly = true)
-    public ResponseEntity<Ticket> getTicket(@PathVariable UUID id, UsuarioEnt userDetails) {
+    public ResponseEntity<Ticket> getTicket(@PathVariable UUID id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         Optional<Prestamo> prestamoOpt = prestamoRepository.findById(id);
         if (prestamoOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Prestamo prestamo = prestamoOpt.get();
         // Verificar permisos: propietario o admin
-        if (!prestamo.getUsuario().getId().equals(userDetails.getId()) && userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {
+        if (!prestamo.getUsuario().getId().equals(userDetails.getUserId()) && userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {
             return ResponseEntity.status(403).build();
         }
         Optional<Ticket> ticket = prestamoService.findTicketByPrestamoId(id);
