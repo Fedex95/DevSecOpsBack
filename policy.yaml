@@ -1,0 +1,71 @@
+---
+env:
+  contexts:
+    - name: "Default Context"
+      urls:
+        - "FULL_URL"
+      includePaths:
+        - "^FULL_URL/.*"
+      excludePaths:
+        - "^https?://(?!HOSTPORT).*"
+  parameters:
+    failOnError: false
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: openapi
+    parameters:
+      apiUrl: "OPENAPI_URL"
+      context: "Default Context"
+
+  - type: passiveScan-config
+    parameters: {}
+
+  - type: passiveScan-wait
+    parameters: {}
+
+  - type: activeScan-config
+    parameters:
+      threadPerHost: 5
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 20
+      handleAntiCSRFTokens: true
+      injectPluginIdInHeader: true
+
+  - type: activeScan
+    parameters:
+      context: "Default Context"
+      threadPerHost: 5
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 20
+    policyDefinition:
+      defaultStrength: Medium
+      defaultThreshold: Low
+      rules:
+        - id: 40018
+          strength: High
+          threshold: Low
+        - id: 90020
+          strength: Medium
+          threshold: Low
+        - id: 40012
+          strength: High
+          threshold: Low
+        - id: 40014
+          strength: High
+          threshold: Low
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: 'REPORT_DIR'
+      reportFile: report
+      reportTitle: "ZAP DAST Report"
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: 'REPORT_DIR'
+      reportFile: report
+      reportTitle: "ZAP DAST Report"

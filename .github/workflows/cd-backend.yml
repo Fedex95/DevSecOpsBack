@@ -1,0 +1,166 @@
+name: CD DevSecOps Backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build JAR with Maven
+        run: mvn clean package -DskipTests --file ./pom.xml
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }} .
+          docker push ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }}
+
+  deploy-staging:
+    name: Deploy to Preproduction
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    env:
+      SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_STAGING }}
+      NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
+      CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_STAGING }}
+      HOST_PORT: ${{ secrets.HOST_PORT_STAGING }}
+      IP_FRONT: ${{ secrets.IP_FRONT }}
+
+    steps:
+      - name: Setup SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          known_hosts: unnecessary
+
+      - name: Add EC2 to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 22 -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy backend on EC2 (staging)
+        run: |
+          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
+            set -euo pipefail
+            echo "Pulling image from Docker Hub..."
+            docker pull ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }}
+            echo "Stopping old container if exists..."
+            docker stop ${CONTAINER_NAME} || echo "No container running"
+            docker rm ${CONTAINER_NAME} || echo "No container to remove"
+            echo "Running new container..."
+            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" -e MAIL_USERNAME="${MAIL_USERNAME}" -e MAIL_PASSWORD="${MAIL_PASSWORD}" -e IP_FRONT="${IP_FRONT}" ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }} 
+            echo "Verifying container..."
+            docker ps
+            echo "Last logs:"
+            docker logs ${CONTAINER_NAME} | tail -20
+            echo "Deployment completed successfully"
+          EOF
+
+          
+  run-dast:
+    name: Run DAST on Preproduction
+    runs-on: self-hosted
+    needs: deploy-staging
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Run DAST with ZAP
+        shell: powershell
+        run: |
+          $env:PATH += ";C:\Windows\System32"
+          .\dast.bat "%GITHUB_WORKSPACE%"
+        env:
+          ZAP_URL: http://${{ secrets.EC2_PUBLIC_IP }}:8082
+      - name: Fail on High/Medium alerts only (ignore Low/Informational)
+        shell: powershell
+        run: |
+          if (!(Test-Path "report.json")) { Write-Error "report.json not found"; exit 1 }
+          $json = Get-Content -Raw -Path "report.json" | ConvertFrom-Json
+          $sites = if ($json.site -is [System.Array]) { $json.site } else { @($json.site) }
+          $alerts = @()
+          foreach ($s in $sites) { if ($s.alerts) { $alerts += $s.alerts } }
+          $high   = ($alerts | Where-Object { $_.risk -eq "High" -or $_.riskdesc -like "High*" }).Count
+          $medium = ($alerts | Where-Object { $_.risk -eq "Medium" -or $_.riskdesc -like "Medium*" }).Count
+          Write-Host "ZAP alerts => High: $high, Medium: $medium (Low/Informational ignored)"
+          if ($high -gt 0 -or $medium -gt 0) { throw "Failing pipeline: High=$high Medium=$medium" }
+      - name: Upload DAST report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dast-report
+          path: |
+            report.html
+            report.json
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: run-dast
+    if: needs.run-dast.result == 'success'
+    env:
+      SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}  
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }} 
+      CONTAINER_NAME: ${{ secrets.CONTAINER_NAME_PROD }}
+      NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
+      CONTAINER_PORT: ${{ secrets.CONTAINER_PORT_PROD }}
+      HOST_PORT: ${{ secrets.HOST_PORT_PROD }}
+      IP_FRONT: ${{ secrets.IP_FRONT }}
+
+    steps:
+      - name: Setup SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          known_hosts: unnecessary
+
+      - name: Add EC2 prod to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 22 -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+      - name: Clean up Production
+        run: |
+          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            docker stop ${CONTAINER_NAME} || echo "No container running"
+            docker rm ${CONTAINER_NAME} || echo "No container to remove"
+          EOF
+
+      - name: Deploy backend on EC2 (production)
+        run: |
+          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ec2-user@${{ secrets.EC2_PUBLIC_IP }} << EOF
+            set -euo pipefail
+            echo "Pulling image from Docker Hub..."
+            docker pull ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }} 
+            echo "Stopping old container if exists..."
+            docker stop ${CONTAINER_NAME} || echo "No container running"
+            docker rm ${CONTAINER_NAME} || echo "No container to remove"
+            echo "Running new container..."
+            docker run -d --name ${CONTAINER_NAME} --network ${NETWORK_NAME} -p ${CONTAINER_PORT}:${HOST_PORT} -e SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" -e SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" -e SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}" -e JWT_SECRET="${JWT_SECRET}" -e MAIL_USERNAME="${MAIL_USERNAME}" -e MAIL_PASSWORD="${MAIL_PASSWORD}" -e IP_FRONT="${IP_FRONT}" ${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.run_number }}  
+            echo "Verifying container..."
+            docker ps
+            echo "Last logs:"
+            docker logs ${CONTAINER_NAME} | tail -20
+            echo "Deployment completed successfully"
+          EOF
