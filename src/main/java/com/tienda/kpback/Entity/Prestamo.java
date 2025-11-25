@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -34,6 +35,9 @@ public class Prestamo {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Estado estado = Estado.pendiente;
+
+    @OneToMany(mappedBy = "prestamo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DetallePrestamo> detallesPrestamo;
 
     public enum Estado {
         pendiente, listo, retirado, devuelto
