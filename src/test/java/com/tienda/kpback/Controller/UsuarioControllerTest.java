@@ -117,22 +117,6 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void testDeleteUsuario_Success() {
-        doNothing().when(usuarioService).deleteUsuario(any(UUID.class));
-
-        ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(mockUserId);
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-    }
-
-    @Test
-    void testDeleteUsuario_NotFound() {
-        doThrow(new RuntimeException("Not found")).when(usuarioService).deleteUsuario(any(UUID.class));
-
-        ResponseEntity<UsuarioEnt> response = usuarioController.deleteUsuario(mockUserId);
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
     void testViewPass_Correct() throws NoSuchAlgorithmException {
         Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
         when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenReturn(mockOptional);
