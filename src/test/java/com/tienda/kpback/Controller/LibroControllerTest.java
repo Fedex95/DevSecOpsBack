@@ -1,5 +1,6 @@
 package com.tienda.kpback.Controller;
 
+import com.tienda.kpback.Config.CustomUserDetails;
 import com.tienda.kpback.Entity.Libro; 
 import com.tienda.kpback.Entity.UsuarioEnt;
 import com.tienda.kpback.Service.LibroService;  
@@ -35,7 +36,7 @@ class LibroControllerTest {
     private LibroController libroController;  
 
     @Mock
-    private UsuarioEnt userDetails;
+    private CustomUserDetails userDetails;
 
     private Libro mockLibro;
     private UUID mockId; 

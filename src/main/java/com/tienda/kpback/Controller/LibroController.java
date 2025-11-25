@@ -5,16 +5,20 @@ import com.tienda.kpback.Service.LibroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.Map;
 
 import java.util.List;
 import java.util.Optional;
+import com.tienda.kpback.Config.CustomUserDetails;
 import com.tienda.kpback.Entity.UsuarioEnt;
 import java.util.UUID;  
 
 @RestController
 @RequestMapping("/api/libros")
+@SecurityRequirement(name = "bearerAuth") 
 public class LibroController {
     @Autowired
     private LibroService libroService;
@@ -33,7 +37,7 @@ public class LibroController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<Libro> createLibro(UsuarioEnt userDetails, @RequestBody Libro libro) {
+    public ResponseEntity<Libro> createLibro(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody Libro libro) {
         if (userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {
             return ResponseEntity.status(403).build();
         }
@@ -43,7 +47,7 @@ public class LibroController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<Libro> updateLibro(UsuarioEnt userDetails, @PathVariable UUID id, @RequestBody Libro libroDetails) {  
+    public ResponseEntity<Libro> updateLibro(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable UUID id, @RequestBody Libro libroDetails) {  
         if (userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {
             return ResponseEntity.status(403).build();
         }
@@ -53,7 +57,7 @@ public class LibroController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLibro(UsuarioEnt userDetails, @PathVariable UUID id) {  
+    public ResponseEntity<Void> deleteLibro(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable UUID id) {  
         if (userDetails.getRol() != UsuarioEnt.Rol.ADMIN) {
             return ResponseEntity.status(403).build();
         }
@@ -65,7 +69,7 @@ public class LibroController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/copias")
-    public ResponseEntity<Void> updateCopiasDisponibles(UsuarioEnt userDetails, @PathVariable UUID id, @io.swagger.v3.oas.annotations.parameters.RequestBody(  
+    public ResponseEntity<Void> updateCopiasDisponibles(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable UUID id, @io.swagger.v3.oas.annotations.parameters.RequestBody(  
         description = "Número de copias disponibles",
         required = true,
         content = @io.swagger.v3.oas.annotations.media.Content(

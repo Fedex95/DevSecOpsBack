@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.http.ResponseEntity;
+import com.tienda.kpback.Config.CustomUserDetails;
 import com.tienda.kpback.Entity.UsuarioEnt;
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +49,7 @@ public class PrestamoControllerTest {
     private PrestamoController prestamoController;
 
     @Mock
-    private UsuarioEnt userDetails;
+    private CustomUserDetails userDetails;
 
     @Mock
     private Prestamo mockPrestamo;
@@ -90,7 +91,7 @@ public class PrestamoControllerTest {
 
     @Test
     void testCreatePrestamo_Success() {
-        when(userDetails.getId()).thenReturn(mockUserId);
+        when(userDetails.getUserId()).thenReturn(mockUserId);
         when(cartService.getCartByUsuarioId(mockUserId)).thenReturn(mockCart);
         when(mockCart.getItems()).thenReturn(Arrays.asList(mock(CartItem.class)));  
         when(prestamoService.addPrestamo(mockCart)).thenReturn(mockPrestamo);
@@ -104,7 +105,7 @@ public class PrestamoControllerTest {
 
     @Test
     void testCreatePrestamo_CartEmpty() {
-        when(userDetails.getId()).thenReturn(mockUserId);
+        when(userDetails.getUserId()).thenReturn(mockUserId);
         when(cartService.getCartByUsuarioId(mockUserId)).thenReturn(mockCart);
         when(mockCart.getItems()).thenReturn(Arrays.asList());  
 
@@ -115,7 +116,7 @@ public class PrestamoControllerTest {
 
     @Test
     void testCreatePrestamo_Error() {
-        when(userDetails.getId()).thenReturn(mockUserId);
+        when(userDetails.getUserId()).thenReturn(mockUserId);
         when(cartService.getCartByUsuarioId(mockUserId)).thenThrow(new RuntimeException("Error"));
 
         ResponseEntity<?> response = prestamoController.createPrestamo(userDetails);
@@ -155,7 +156,7 @@ public class PrestamoControllerTest {
     @Test
     void testGetTicket_Success() {
         when(prestamoRepository.findById(mockUserId)).thenReturn(Optional.of(mockPrestamo));
-        when(userDetails.getId()).thenReturn(mockUserId);
+        when(userDetails.getUserId()).thenReturn(mockUserId);
         when(prestamoService.findTicketByPrestamoId(mockUserId)).thenReturn(Optional.of(mockTicket));
 
         ResponseEntity<Ticket> response = prestamoController.getTicket(mockUserId, userDetails);
@@ -174,7 +175,7 @@ public class PrestamoControllerTest {
     @Test
     void testGetTicket_Forbidden() {
         when(prestamoRepository.findById(mockUserId)).thenReturn(Optional.of(mockPrestamo));
-        when(userDetails.getId()).thenReturn(UUID.randomUUID());  
+        when(userDetails.getUserId()).thenReturn(UUID.randomUUID());  
         when(userDetails.getRol()).thenReturn(UsuarioEnt.Rol.USER);
 
         ResponseEntity<Ticket> response = prestamoController.getTicket(mockUserId, userDetails);
