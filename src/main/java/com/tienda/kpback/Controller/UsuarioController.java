@@ -57,21 +57,24 @@ public class UsuarioController {
 
     @GetMapping("/viewPass")
     public ResponseEntity<String> viewPass(@RequestParam @Valid String email, @RequestParam @Valid String pass){
+        // Validación básica
         if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") || pass.length() < 8) {
             return ResponseEntity.badRequest().body("Entrada inválida");
         }
 
-        Optional<UsuarioEnt> usuarioP = usuarioService.getUsuarioByEmail(email);
-        if (usuarioP.isPresent()) {
-            UsuarioEnt usuarioExist = usuarioP.get();
-            boolean correctPass = usuarioService.checkPass(pass, usuarioExist.getPass());
-            if (correctPass) {
-                return new ResponseEntity<>("Correct Password", HttpStatus.OK); 
-            } else {
-                return new ResponseEntity<>("Wrong Password", HttpStatus.UNAUTHORIZED);
+        // Lista de palabras prohibidas
+        String[] forbiddenWords = {"case", "randomblob", "when", "then", "else", "union", "select", "insert", "update", "delete", "drop", "exec", "script", "<", ">"};
+        for (String word : forbiddenWords) {
+            if (pass.toLowerCase().contains(word)) {
+                return ResponseEntity.badRequest().body("Entrada inválida");
             }
+        }
+
+        Optional<UsuarioEnt> usuarioP = usuarioService.getUsuarioByEmailAndPass(email, pass); 
+        if (usuarioP.isPresent()) {
+            return new ResponseEntity<>("Correct Password", HttpStatus.OK); 
         } else {
-            return new ResponseEntity<>("Usuario no existente", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Wrong Password or User not found", HttpStatus.UNAUTHORIZED);
         }
     }
 

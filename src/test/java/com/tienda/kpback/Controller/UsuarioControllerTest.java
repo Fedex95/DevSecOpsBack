@@ -116,9 +116,7 @@ class UsuarioControllerTest {
     @Test
     void testViewPass_Correct() throws NoSuchAlgorithmException {
         Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(mockOptional);  
-        when(mockUsuario.getPass()).thenReturn("hashed");
-        doReturn(true).when(usuarioService).checkPass(anyString(), anyString());
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenReturn(mockOptional);  
 
         ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -127,23 +125,20 @@ class UsuarioControllerTest {
 
     @Test
     void testViewPass_Wrong() throws NoSuchAlgorithmException {
-        Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(mockOptional); 
-        when(mockUsuario.getPass()).thenReturn("hashed");
-        doReturn(false).when(usuarioService).checkPass(anyString(), anyString());
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenReturn(Optional.empty());  
 
         ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Wrong Password", response.getBody());
+        assertEquals("Wrong Password or User not found", response.getBody());  
     }
 
     @Test
     void testViewPass_UserNotFound() {
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(Optional.empty());  
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenReturn(Optional.empty());  
 
-        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  // Pass >= 8 chars
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Usuario no existente", response.getBody());
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "password123");  
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());  
+        assertEquals("Wrong Password or User not found", response.getBody());  
     }
 
     @Test
@@ -161,11 +156,15 @@ class UsuarioControllerTest {
     }
 
     @Test
+    void testViewPass_SQLInjection_DenyList() {
+        ResponseEntity<String> response = usuarioController.viewPass("email@example.com", "case randomblob(100000) when not null then 1 else 1 end"); 
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Entrada inválida", response.getBody());
+    }
+
+    @Test
     void testViewPass_Error() {
-        Optional<UsuarioEnt> mockOptional = Optional.of(mockUsuario);
-        when(usuarioService.getUsuarioByEmail(anyString())).thenReturn(mockOptional);
-        when(mockUsuario.getPass()).thenReturn("hashed");
-        doThrow(new RuntimeException("Error")).when(usuarioService).checkPass(anyString(), anyString());
+        when(usuarioService.getUsuarioByEmailAndPass(anyString(), anyString())).thenThrow(new RuntimeException("Error"));  
 
         assertThrows(RuntimeException.class, () -> {
             usuarioController.viewPass("email@example.com", "password123");
