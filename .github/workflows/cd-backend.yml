@@ -38,10 +38,10 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
       MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-      CONTAINER_NAME_STAGING: ${{ secrets.CONTAINER_NAME_STAGING }}
+      CONTAINER_NAME_STAGING: ${{ secrets.CONTAINER_NAME_PROD }}
       NETWORK_NAME: ${{ secrets.NETWORK_NAME }}
-      CONTAINER_PORT_STAGING: ${{ secrets.CONTAINER_PORT_STAGING }}
-      HOST_PORT_STAGING: ${{ secrets.HOST_PORT_STAGING }}
+      CONTAINER_PORT_STAGING: ${{ secrets.CONTAINER_PORT_PROD }}
+      HOST_PORT_STAGING: ${{ secrets.HOST_PORT_PROD }}
       IP_FRONT: ${{ secrets.IP_FRONT }}
 
     steps:
