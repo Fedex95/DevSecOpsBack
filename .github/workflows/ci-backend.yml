@@ -35,7 +35,7 @@ jobs:
         run: mvn -B checkstyle:check -Dcheckstyle.config.location=${GITHUB_WORKSPACE}/google_checks.xml
 
       - name: Upload target report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: target-report
           path: target/
